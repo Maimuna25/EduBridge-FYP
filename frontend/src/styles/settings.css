@@ -1,0 +1,374 @@
+/* ==============================
+   SETTINGS PAGE LAYOUT
+============================== */
+
+.settings-wrapper {
+
+  min-height:100vh;
+
+  padding:calc(3rem * var(--font-scale)) calc(3.5rem * var(--font-scale));
+
+  background:
+    radial-gradient(circle at top left, rgba(99,102,241,0.12) 0%, transparent 45%),
+    radial-gradient(circle at bottom right, rgba(99,102,241,0.08) 0%, transparent 45%),
+    var(--bg-main);
+
+  font-size:calc(16px * var(--font-scale));
+}
+
+.settings-page {
+  max-width:1600px;
+  margin:0 auto;
+}
+
+
+/* ==============================
+   PAGE HEADER
+============================== */
+
+.page-header {
+  margin-bottom:calc(50px * var(--font-scale));
+}
+
+.page-header h1 {
+
+  font-size:calc(3rem * var(--font-scale));
+  font-weight:800;
+
+  margin-bottom:calc(10px * var(--font-scale));
+
+  color:var(--text-main);
+}
+
+.page-header p {
+
+  font-size:calc(1.2rem * var(--font-scale));
+  color:var(--text-secondary);
+}
+
+
+/* ==============================
+   SETTINGS CARD
+============================== */
+
+.settings-card {
+
+  background:var(--bg-card,white);
+
+  border-radius:26px;
+
+  padding:calc(40px * var(--font-scale)) calc(46px * var(--font-scale));
+
+  margin-bottom:calc(32px * var(--font-scale));
+
+  border:1px solid var(--border,#e5e7eb);
+
+  box-shadow:0 20px 45px rgba(0,0,0,0.06);
+}
+
+.settings-card h2 {
+
+  font-size:calc(1.6rem * var(--font-scale));
+
+  margin-bottom:calc(28px * var(--font-scale));
+
+  font-weight:700;
+
+  color:var(--text-main);
+}
+
+
+/* ==============================
+   SETTING ROW
+============================== */
+
+.setting-row {
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  padding:calc(26px * var(--font-scale)) 0;
+
+  border-top:1px solid var(--border,#f1f5f9);
+}
+
+.setting-row:first-of-type {
+  border-top:none;
+}
+
+.setting-row h4 {
+
+  font-size:calc(1.15rem * var(--font-scale));
+
+  margin-bottom:calc(6px * var(--font-scale));
+}
+
+.muted {
+
+  font-size:calc(1rem * var(--font-scale));
+
+  color:var(--text-secondary);
+}
+
+
+/* ==============================
+   OPTION BUTTONS
+============================== */
+
+.option-group {
+
+  display:flex;
+
+  gap:calc(14px * var(--font-scale));
+}
+
+.option {
+
+  padding:calc(12px * var(--font-scale)) calc(22px * var(--font-scale));
+
+  border-radius:12px;
+
+  border:1px solid var(--border,#d1d5db);
+
+  background:var(--bg-main,#f9fafb);
+
+  cursor:pointer;
+
+  font-size:calc(1rem * var(--font-scale));
+
+  font-weight:500;
+
+  transition:all .15s ease;
+}
+
+.option:hover {
+  background:#f1f5f9;
+}
+
+.option.active {
+
+  background:#2563eb;
+
+  color:white;
+
+  border-color:#2563eb;
+}
+
+
+/* ==============================
+   SELECT DROPDOWN
+============================== */
+
+.select {
+
+  padding:calc(12px * var(--font-scale)) calc(18px * var(--font-scale));
+
+  border-radius:12px;
+
+  border:1px solid var(--border,#d1d5db);
+
+  background:var(--bg-card,white);
+
+  font-size:calc(1rem * var(--font-scale));
+}
+
+
+/* ==============================
+   TOGGLE SWITCH (NEW)
+============================== */
+
+.switch {
+  position:relative;
+  display:inline-block;
+  width:calc(52px * var(--font-scale));
+  height:calc(28px * var(--font-scale));
+}
+
+.switch input {
+  opacity:0;
+  width:0;
+  height:0;
+}
+
+.slider {
+
+  position:absolute;
+  cursor:pointer;
+
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+
+  background-color:#e5e7eb;
+
+  border-radius:34px;
+
+  transition:.2s;
+}
+
+.slider:before {
+
+  position:absolute;
+  content:"";
+
+  height:calc(20px * var(--font-scale));
+  width:calc(20px * var(--font-scale));
+
+  left:calc(4px * var(--font-scale));
+  bottom:calc(4px * var(--font-scale));
+
+  background-color:white;
+
+  border-radius:50%;
+
+  transition:.2s;
+}
+
+/* ACTIVE STATE */
+
+.switch input:checked + .slider {
+  background-color:#2563eb;
+}
+
+.switch input:checked + .slider:before {
+  transform:translateX(calc(24px * var(--font-scale)));
+}
+
+
+/* ==============================
+   LOGOUT SECTION
+============================== */
+
+.logout-section {
+
+  margin-top:calc(60px * var(--font-scale));
+
+  padding-top:calc(40px * var(--font-scale));
+
+  border-top:1px solid var(--border);
+}
+
+.logout-btn {
+
+  width:100%;
+
+  background:#ef4444;
+
+  border:none;
+
+  color:white;
+
+  padding:calc(16px * var(--font-scale));
+
+  border-radius:14px;
+
+  font-size:calc(1.1rem * var(--font-scale));
+
+  font-weight:700;
+
+  cursor:pointer;
+
+  transition:all .15s ease;
+}
+
+.logout-btn:hover {
+
+  background:#dc2626;
+
+  transform:translateY(-1px);
+}
+
+
+/* ==============================
+   DARK MODE SUPPORT
+============================== */
+
+[data-theme="dark"] .settings-card {
+
+  background:#1f2937;
+
+  border-color:#374151;
+}
+
+[data-theme="dark"] .option {
+
+  background:#374151;
+
+  border-color:#4b5563;
+
+  color:white;
+}
+
+[data-theme="dark"] .option:hover {
+  background:#4b5563;
+}
+
+[data-theme="dark"] .select {
+
+  background:#374151;
+
+  color:white;
+
+  border-color:#4b5563;
+}
+
+/* DARK MODE SWITCH */
+
+[data-theme="dark"] .slider {
+  background-color:#4b5563;
+}
+
+[data-theme="dark"] .switch input:checked + .slider {
+  background-color:#3b82f6;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.popup-box {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  width: 320px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.close-btn {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ==============================
+   RESPONSIVE
+============================== */
+
+@media (max-width:768px){
+
+  .setting-row{
+
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    gap:calc(18px * var(--font-scale));
+  }
+
+}
