@@ -1,0 +1,83 @@
+.result-wrapper {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f4f6fb;
+}
+
+.result-card {
+  background: white;
+  padding: 60px 70px;
+  border-radius: 14px;
+  text-align: center;
+  width: 520px;           /* bigger container */
+  box-shadow: 0 12px 35px rgba(0,0,0,0.08);
+}
+
+.result-title {
+  font-size: 30px;
+  margin-bottom: 35px;
+  color: #2a2a2a;
+}
+
+.score-circle {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  margin: 0 auto 25px auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #4f7cff, #6aa3ff);
+  color: white;
+}
+
+.score-number {
+  font-size: 52px;
+  font-weight: bold;
+}
+
+.score-detail {
+  font-size: 17px;
+  color: #666;
+  margin-bottom: 35px;
+}
+
+.result-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.result-buttons button {
+  width: 160px;
+  height: 44px;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-sizing: border-box;   /* FIX */
+}
+
+.primary-btn {
+  background: #4f7cff;
+  border: 1.5px solid #4f7cff;   /* ADD */
+  color: white;
+}
+
+
+.primary-btn:hover {
+  background: #3c63e0;
+}
+
+.secondary-btn {
+  background: white;
+  border: 1.5px solid #4f7cff;
+  color: #4f7cff;
+  margin-top: 30px;
+}
+
+.secondary-btn:hover {
+  background: #f1f4ff;
+}
