@@ -1,68 +1,159 @@
+/* =================================
+   GLOBAL RESET
+================================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+
+/* =================================
+   THEME VARIABLES
+================================= */
+
+/* LIGHT THEME (DEFAULT) */
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  --bg-main: #f8fafc;
+  --bg-gradient-top: #f8fafc;
+  --bg-gradient-bottom: #eef2ff;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --bg-sidebar: #eef2ff;
+  --bg-card: #ffffff;
+
+  --text-main: #111827;
+  --border: #e5e7eb;
+
+  /* TEXT SIZE SYSTEM */
+
+  --font-base: 16px;
+  --font-scale: 1;
+
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+
+/* DARK THEME */
+
+[data-theme="dark"] {
+
+  --bg-main: #0f172a;
+  --bg-gradient-top: #0f172a;
+  --bg-gradient-bottom: #020617;
+
+  --bg-sidebar: #1e293b;
+  --bg-card: #1e293b;
+
+  --text-main: #f9fafb;
+  --border: #374151;
+
 }
-a:hover {
-  color: #535bf2;
+
+
+/* =================================
+   TEXT SIZE MODES
+================================= */
+
+[data-text-size="small"] {
+  --font-scale: 0.9;
 }
+
+[data-text-size="default"] {
+  --font-scale: 1;
+}
+
+[data-text-size="large"] {
+  --font-scale: 1.15;
+}
+
+
+/* =================================
+   BODY
+================================= */
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  font-size: calc(var(--font-base) * var(--font-scale));
+
+  background: linear-gradient(
+    180deg,
+    var(--bg-gradient-top) 0%,
+    var(--bg-gradient-bottom) 100%
+  );
+
+  color: var(--text-main);
+
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    font-size 0.2s ease;
+
+}
+
+
+/* =================================
+   GLOBAL APP LAYOUT
+================================= */
+
+.app-content {
+
+  margin-left: 360px;
   min-height: 100vh;
+
+  background: var(--bg-main);
+
+  transition: background 0.25s ease;
+
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+
+/* =================================
+   SIDEBAR SUPPORT
+================================= */
+
+.sidebar {
+
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+
+  transition:
+    background 0.25s ease,
+    border 0.25s ease;
+
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+
+/* =================================
+   GLOBAL CARD SUPPORT
+================================= */
+
+.settings-card,
+.quiz-card,
+.stat-card,
+.list-card {
+
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+
+  transition:
+    background 0.25s ease,
+    border 0.25s ease;
+
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+
+/* =================================
+   MOBILE FIX
+================================= */
+
+@media (max-width: 768px) {
+
+  .app-content {
+    margin-left: 0;
   }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+
 }

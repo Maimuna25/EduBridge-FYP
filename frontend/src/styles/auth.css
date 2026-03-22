@@ -1,0 +1,196 @@
+/* =========================
+   PAGE LAYOUT
+========================= */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 2rem;
+
+  background:
+    radial-gradient(circle at top left, rgba(99,102,241,0.15), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(99,102,241,0.08), transparent 40%),
+    #f1f5f9;
+}
+
+
+/* =========================
+   FORM CARD
+========================= */
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(8px);
+
+  padding: 2.5rem 2.5rem;
+
+  border-radius: 24px;
+
+  box-shadow:
+    0 40px 80px rgba(0,0,0,0.12),
+    0 10px 30px rgba(59,130,246,0.12);
+
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.login-card:hover {
+  transform: translateY(-4px);
+}
+
+
+/* =========================
+   HEADINGS
+========================= */
+
+.login-card h2 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.login-card-subtitle {
+  display: block;
+  color: #64748b;
+  margin-bottom: 2rem;
+}
+
+
+/* =========================
+   FORM INPUTS
+========================= */
+
+.login-card label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+
+  margin-bottom: 1.2rem;
+
+  font-size: 0.95rem;
+
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-card input:focus {
+  outline: none;
+  border-color: #3b82f6;
+
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+
+
+/* =========================
+   PRIMARY BUTTON
+========================= */
+
+.login-card button {
+  width: 100%;
+
+  padding: 0.9rem;
+
+  border-radius: 999px;
+  border: none;
+
+  font-weight: 600;
+
+  background: linear-gradient(135deg,#3b82f6,#2563eb);
+  color: white;
+
+  cursor: pointer;
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-card button:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 20px rgba(37,99,235,0.35);
+}
+
+
+/* =========================
+   DIVIDER
+========================= */
+
+.login-divider {
+  text-align: center;
+  margin: 1.6rem 0;
+  color: #94a3b8;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  display: inline-block;
+  width: 35%;
+  height: 1px;
+  background: #e2e8f0;
+  vertical-align: middle;
+  margin: 0 10px;
+}
+
+
+/* =========================
+   SECONDARY BUTTON
+========================= */
+
+.secondary-btn {
+  display: block;
+  text-align: center;
+
+  padding: 0.8rem;
+
+  border-radius: 999px;
+  border: 2px solid #3b82f6;
+
+  color: #3b82f6;
+  font-weight: 600;
+
+  text-decoration: none;
+
+  transition: all 0.2s ease;
+}
+
+.secondary-btn:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+
+/* =========================
+   FOOTER TEXT
+========================= */
+
+.auth-footer {
+  margin-top: 1.6rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 500px) {
+
+  .login-card {
+    padding: 2rem 1.6rem;
+  }
+
+}

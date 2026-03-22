@@ -1,0 +1,37 @@
+/* must match .sidebar width in NavBar.css */
+:root {
+  --sidebar-width: 360px;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+/* pushes every page to the right of the fixed sidebar */
+.app-content {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+
+  :root {
+    --sidebar-width: 0px;
+  }
+
+  .app-content {
+    margin-left: 0;
+  }
+
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(to right, #eef2f7, #f6f8fb);
+}
+
+.main-content {
+  flex: 1;
+  padding: 40px 60px;
+}
