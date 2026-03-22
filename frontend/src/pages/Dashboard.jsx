@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
@@ -5,6 +6,7 @@ import Note from "./Note";
 import "../styles/dashboard.css";
 
 export default function Dashboard() {
+
   const navigate = useNavigate();
   const [showHelper, setShowHelper] = useState(false);
 
@@ -12,6 +14,8 @@ export default function Dashboard() {
   const [notes, setNotes] = useState([]);
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
+
+  const [selectedNote, setSelectedNote] = useState(null);
 
   // SUBJECT DATA
   const [subjects, setSubjects] = useState([]);
@@ -80,7 +84,6 @@ export default function Dashboard() {
           topic.category?.subject ||
           "";
 
-        // convert subject to string safely
         if (typeof subject === "object") {
           subject = subject?.name || "";
         }
@@ -164,7 +167,7 @@ export default function Dashboard() {
         <section className="section">
           <div className="subject-cards">
 
-            <div className="subject-card" onClick={() => goToSubject("Maths")}>
+            <div className="subject-card" onClick={() => goToSubject("mathematics")}>
               📘
               <div>
                 <strong>Mathematics</strong>
@@ -172,18 +175,18 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="subject-card" onClick={() => goToSubject("Science")}>
-              🟣
+            <div className="subject-card" onClick={() => goToSubject("science")}>
+              🧪
               <div>
                 <strong>Science</strong>
                 <span>Continue learning</span>
               </div>
             </div>
 
-            <div className="subject-card" onClick={() => goToSubject("Chemistry")}>
-              🧪
+            <div className="subject-card" onClick={() => goToSubject("english")}>
+              🟣
               <div>
-                <strong>Chemistry</strong>
+                <strong>English</strong>
                 <span>Continue learning</span>
               </div>
             </div>
@@ -246,19 +249,31 @@ export default function Dashboard() {
           <div className="notes-grid">
 
             <div className="notes-list">
+
               {notes.length === 0 ? (
                 <p className="notes-empty">
                   No notes yet. Create your first one 👇
                 </p>
               ) : (
                 notes.map((note) => (
-                  <Note
-                    note={note}
-                    onDelete={deleteNote}
+
+                  <div
                     key={note.id}
-                  />
+                    className="note-card clickable"
+                    onClick={() => setSelectedNote(note)}
+                  >
+                    <h4>{note.title}</h4>
+
+                    <p>
+                      {note.content.length > 80
+                        ? note.content.substring(0, 80) + "..."
+                        : note.content}
+                    </p>
+                  </div>
+
                 ))
               )}
+
             </div>
 
             <div className="notes-create">
@@ -290,7 +305,53 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
       </div>
+
+      {/* NOTE POPUP */}
+
+      {selectedNote && (
+
+        <div
+          className="note-popup-overlay"
+          onClick={() => setSelectedNote(null)}
+        >
+
+          <div
+            className="note-popup"
+            onClick={(e) => e.stopPropagation()}
+          >
+
+            <h3>{selectedNote.title}</h3>
+
+            <p>{selectedNote.content}</p>
+
+            <div className="note-popup-actions">
+
+              <button
+                className="secondary-btn"
+                onClick={() => setSelectedNote(null)}
+              >
+                Close
+              </button>
+
+              <button
+                className="danger-btn"
+                onClick={() => {
+                  deleteNote(selectedNote.id);
+                  setSelectedNote(null);
+                }}
+              >
+                Delete
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
 
       {/* AI HELPER */}
       <div
@@ -340,13 +401,7 @@ export default function Dashboard() {
   );
 }
 
-// =====================
-// PROGRESS COMPONENT
-// =====================
-
 function Progress({ title, percent, subject }) {
-    console.log("SUBJECT RECEIVED:", subject);
-
 
   const colorMap = {
     mathematics: "#2563eb",
@@ -385,3 +440,4 @@ function Progress({ title, percent, subject }) {
     </div>
   );
 }
+
