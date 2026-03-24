@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 
 from datetime import timedelta, datetime
 from django.db.models import Count, Avg
-from django.db.models.functions import TruncDate
+from django.db.models.functions import TruncDate, TruncHour
 
 from .models import (
     Subject,
@@ -551,10 +551,6 @@ class UpdateTopicProgressView(APIView):
                 slide=slide
             )
 
-        # ========================================
-        # UPDATE PROGRESS
-        # ========================================
-
         progress.slides_completed = slides_completed
         progress.save()
 
@@ -739,32 +735,65 @@ class StudyInsightsView(APIView):
         # ========================================
         # STUDY FREQUENCY (FIXED)
         # ========================================
+        session_hours = set()
 
-        activity_days = set(
+        # Slide sessions
+        slide_hours = (
             SlideCompletion.objects
-            .filter(user=user, completed_at__gte=last_period)
-            .annotate(day=TruncDate("completed_at"))
-            .values_list("day", flat=True)
+            .filter(
+                user=user,
+                completed_at__gte=last_period,
+                completed_at__isnull=False
+            )
+            .annotate(hour=TruncHour("completed_at"))
+            .values_list("hour", flat=True)
         )
 
-        activity_days |= set(
+        session_hours.update(h for h in slide_hours if h)
+
+        # Quiz sessions
+        quiz_hours = (
             UserQuizAttempt.objects
-            .filter(user=user, completed_at__gte=last_period)
-            .annotate(day=TruncDate("completed_at"))
-            .values_list("day", flat=True)
+            .filter(
+                user=user,
+                completed_at__gte=last_period,
+                completed_at__isnull=False
+            )
+            .annotate(hour=TruncHour("completed_at"))
+            .values_list("hour", flat=True)
         )
 
-        study_days = len(activity_days)
-        study_frequency = round((study_days / DAYS_RANGE) * 7)
+        session_hours.update(h for h in quiz_hours if h)
+
+        # Other activity (AI / Explain / etc.)
+        extra_hours = (
+            UserActivity.objects
+            .filter(
+                user=user,
+                created_at__gte=last_period,
+                created_at__isnull=False
+            )
+            .annotate(hour=TruncHour("created_at"))
+            .values_list("hour", flat=True)
+        )
+
+        session_hours.update(h for h in extra_hours if h)
+
+        total_sessions = len(session_hours)
+
+        study_frequency = min(
+            round((total_sessions / DAYS_RANGE) * 7),
+            7
+        ) if DAYS_RANGE > 0 else 0
 
         # ========================================
         # ACCURACY
         # ========================================
 
-        total_score = sum(a.score for a in attempts)
-        total_q = sum(a.total_questions for a in attempts)
+        total_score = sum((a.score or 0) for a in attempts)
+        total_q = sum((a.total_questions or 0) for a in attempts)
 
-        average_accuracy = round((total_score / total_q) * 100, 1) if total_q else 0
+        average_accuracy = round((total_score / total_q) * 100, 1) if total_q > 0 else 0
 
         # ========================================
         # TOPICS MASTERED
@@ -847,7 +876,7 @@ class StudyInsightsView(APIView):
         ][:2]
 
         # ========================================
-        # STUDY STREAK (FIXED)
+        # STUDY STREAK
         # ========================================
 
         activity_days = set(
