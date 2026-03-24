@@ -109,7 +109,6 @@ export default function Settings() {
             </div>
 
             <div className="option-group">
-              <button className={`option ${theme === "system" ? "active" : ""}`} onClick={() => setTheme("system")}>System</button>
               <button className={`option ${theme === "light" ? "active" : ""}`} onClick={() => setTheme("light")}>Light</button>
               <button className={`option ${theme === "dark" ? "active" : ""}`} onClick={() => setTheme("dark")}>Dark</button>
             </div>

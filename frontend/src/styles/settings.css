@@ -26,10 +26,6 @@
    PAGE HEADER
 ============================== */
 
-.page-header {
-  margin-bottom:calc(50px * var(--font-scale));
-}
-
 .page-header h1 {
 
   font-size:calc(3rem * var(--font-scale));
