@@ -26,6 +26,9 @@ export default function ExplainItBack() {
   const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState(null);
 
+  // 🔥 NEW STATE
+  const [isTyping, setIsTyping] = useState(false);
+
   /* ============================= */
   /* FETCH SUBJECTS + TOPICS */
   /* ============================= */
@@ -41,7 +44,6 @@ export default function ExplainItBack() {
         setSubjects(subjectsRes.data);
         setTopics(topicsRes.data);
 
-        // set defaults
         if (subjectsRes.data.length > 0) {
           setSelectedSubject(subjectsRes.data[0].name);
         }
@@ -53,10 +55,6 @@ export default function ExplainItBack() {
 
     fetchData();
   }, []);
-
-  /* ============================= */
-  /* FILTER TOPICS BY SUBJECT */
-  /* ============================= */
 
   const filteredTopics = topics.filter(
     (t) => t.subject === selectedSubject
@@ -83,6 +81,7 @@ export default function ExplainItBack() {
       setFeedback("");
       setScore(null);
       setExplanation("");
+      setIsTyping(false); // reset
 
       try {
 
@@ -107,9 +106,7 @@ export default function ExplainItBack() {
         setPrompt({ title: "Error", concept_text: `⚠️ ${msg}` });
 
       } finally {
-
         setLoadingPrompt(false);
-
       }
 
     };
@@ -154,9 +151,7 @@ export default function ExplainItBack() {
       setFeedback(`⚠️ ${msg}`);
 
     } finally {
-
       setSubmitting(false);
-
     }
 
   };
@@ -181,7 +176,6 @@ export default function ExplainItBack() {
 
           <div className="explain-controls">
 
-            {/* SUBJECT DROPDOWN */}
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
@@ -193,7 +187,6 @@ export default function ExplainItBack() {
               ))}
             </select>
 
-            {/* TOPIC DROPDOWN */}
             <select
               value={selectedTopic}
               onChange={(e) => setSelectedTopic(e.target.value)}
@@ -205,7 +198,6 @@ export default function ExplainItBack() {
               ))}
             </select>
 
-            {/* DIFFICULTY */}
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
@@ -245,6 +237,13 @@ export default function ExplainItBack() {
 
             </div>
 
+            {/* 🔥 OVERLAY */}
+            {isTyping && (
+              <div className="concept-overlay">
+                <p>🔒 Hidden while you write your explanation</p>
+              </div>
+            )}
+
           </div>
 
 
@@ -263,6 +262,8 @@ export default function ExplainItBack() {
                 placeholder="Type your explanation here..."
                 value={explanation}
                 onChange={(e) => setExplanation(e.target.value)}
+                onFocus={() => setIsTyping(true)}   // 🔥 trigger
+                onBlur={() => setIsTyping(false)}   // 🔥 optional
                 disabled={loadingPrompt}
               />
 
