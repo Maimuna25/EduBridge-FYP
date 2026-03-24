@@ -47,6 +47,10 @@ class Topic(models.Model):
     def __str__(self):
         return self.name
 
+    # ✅ ADD THIS
+    @property
+    def subject(self):
+        return self.category.subject
 
 class Slide(models.Model):
     topic = models.ForeignKey(
@@ -85,6 +89,21 @@ class SlideCompletion(models.Model):
     def __str__(self):
         return f"{self.user.username} completed {self.slide}"
 
+class UserActivity(models.Model):
+
+    ACTIVITY_TYPES = [
+        ("slide", "Slide Viewed"),
+        ("quiz", "Quiz Attempted"),
+        ("ai", "AI Tutor Used"),
+        ("explain", "Explain It Back Used"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    activity_type = models.CharField(max_length=20, choices=ACTIVITY_TYPES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.activity_type}"
 
 
 class TopicProgress(models.Model):

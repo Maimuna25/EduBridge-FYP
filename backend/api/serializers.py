@@ -280,13 +280,17 @@ class SlideSerializer(serializers.ModelSerializer):
 
 
 class TopicSerializer(serializers.ModelSerializer):
+    # 🔥 Keep category (needed for frontend filtering)
+    category = serializers.IntegerField(source="category.id", read_only=True)
 
-    slides = SlideSerializer(many=True, read_only=True)
-
-    subject_name = serializers.CharField(
+    # 🔥 Keep subject (clean name for UI)
+    subject = serializers.CharField(
         source="category.subject.name",
         read_only=True
     )
+
+    # 🔥 Keep slides (for topic detail pages)
+    slides = SlideSerializer(many=True, read_only=True)
 
     class Meta:
         model = Topic
@@ -294,9 +298,9 @@ class TopicSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "slug",
-            "category",
-            "subject_name",
-            "slides"
+            "category",   # ✅ REQUIRED (fixes your bug)
+            "subject",    # ✅ clean subject name
+            "slides"      # ✅ optional but useful
         ]
 
 

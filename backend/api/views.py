@@ -25,6 +25,7 @@ from .models import (
     TopicProgress,
     SlideCompletion,
     UserSettings,
+    UserActivity
 )
 
 from .serializers import (
@@ -187,6 +188,19 @@ class SubmitQuizView(APIView):
 
         attempt.score = score
         attempt.save()
+
+        attempt.score = score
+        attempt.save()
+
+        UserActivity.objects.create(
+            user=request.user,
+            activity_type="quiz"
+        )
+
+        return Response({
+            "score": score,
+            "total": questions.count()
+        })
 
         return Response({
             "score": score,
@@ -386,6 +400,11 @@ Instructions:
             content=assistant_text,
         )
 
+        UserActivity.objects.create(
+            user=request.user,
+            activity_type="ai"
+        )
+
         return Response({
             "reply": assistant_text
         })
@@ -485,17 +504,11 @@ class TopicSlidesView(APIView):
             topic=topic
         ).order_by("order")
 
-        # ========================================
-        # RECORD SLIDE COMPLETION
-        # ========================================
-
-        for slide in slides:
-
-            SlideCompletion.objects.get_or_create(
-                user=request.user,
-                slide=slide,
-                defaults={"completed_at": timezone.now()}
-            )
+        # ✅ Track slide activity (ONCE per visit)
+        UserActivity.objects.create(
+            user=request.user,
+            activity_type="slide"
+        )
 
         serializer = SlideSerializer(slides, many=True)
 
@@ -513,10 +526,6 @@ class UpdateTopicProgressView(APIView):
         topic_slug = request.data.get("topic_slug")
         slides_completed = int(request.data.get("slides_completed", 0))
 
-        print("----- PROGRESS UPDATE REQUEST -----")
-        print("User:", request.user)
-        print("Request Data:", request.data)
-
         topic = get_object_or_404(Topic, slug=topic_slug)
 
         progress, created = TopicProgress.objects.get_or_create(
@@ -524,22 +533,35 @@ class UpdateTopicProgressView(APIView):
             topic=topic
         )
 
-        total_slides = topic.slides.count()
+        slides = topic.slides.all().order_by("order")
+        total_slides = slides.count()
 
         # Prevent impossible numbers
         slides_completed = min(slides_completed, total_slides)
 
-        progress.slides_completed = slides_completed
-        progress.save()  # 🔥 This automatically updates updated_at
+        # ========================================
+        # ✅ CREATE SLIDE COMPLETION RECORDS (FIX)
+        # ========================================
 
-        print("Saved slides_completed:", progress.slides_completed)
-        print("Updated timestamp:", progress.updated_at)
+        completed_slides = slides[:slides_completed]
+
+        for slide in completed_slides:
+            SlideCompletion.objects.get_or_create(
+                user=request.user,
+                slide=slide
+            )
+
+        # ========================================
+        # UPDATE PROGRESS
+        # ========================================
+
+        progress.slides_completed = slides_completed
+        progress.save()
 
         return Response({
             "status": "updated",
-            "updated_at": progress.updated_at
+            "slides_completed": slides_completed
         })
-
 
 class TopicProgressView(APIView):
     permission_classes = [IsAuthenticated]
@@ -670,6 +692,11 @@ Instructions:
             })
 
         except Exception as e:
+            # ✅ Track explain activity
+            UserActivity.objects.create(
+                user=request.user,
+                activity_type="explain"
+            )
             return Response(
                 {"error": f"OpenAI error: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -710,24 +737,24 @@ class StudyInsightsView(APIView):
                 seen.add(a.quiz_id)
 
         # ========================================
-        # STUDY FREQUENCY (30-DAY NORMALIZED)
+        # STUDY FREQUENCY (FIXED)
         # ========================================
 
-        slide_days = set(
+        activity_days = set(
             SlideCompletion.objects
             .filter(user=user, completed_at__gte=last_period)
             .annotate(day=TruncDate("completed_at"))
             .values_list("day", flat=True)
         )
 
-        quiz_days = set(
+        activity_days |= set(
             UserQuizAttempt.objects
             .filter(user=user, completed_at__gte=last_period)
             .annotate(day=TruncDate("completed_at"))
             .values_list("day", flat=True)
         )
 
-        study_days = len(slide_days | quiz_days)
+        study_days = len(activity_days)
         study_frequency = round((study_days / DAYS_RANGE) * 7)
 
         # ========================================
@@ -752,7 +779,7 @@ class StudyInsightsView(APIView):
         topics_total = Topic.objects.count()
 
         # ========================================
-        # WEEKLY ACTIVITY (REAL EFFORT)
+        # WEEKLY ACTIVITY
         # ========================================
 
         week_days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -820,10 +847,17 @@ class StudyInsightsView(APIView):
         ][:2]
 
         # ========================================
-        # STUDY STREAK (OPTIMIZED)
+        # STUDY STREAK (FIXED)
         # ========================================
 
         activity_days = set(
+            SlideCompletion.objects
+            .filter(user=user)
+            .annotate(day=TruncDate("completed_at"))
+            .values_list("day", flat=True)
+        )
+
+        activity_days |= set(
             UserQuizAttempt.objects
             .filter(user=user)
             .annotate(day=TruncDate("completed_at"))
@@ -832,6 +866,10 @@ class StudyInsightsView(APIView):
 
         streak = 0
         current_day = now.date()
+
+        # 🔥 allow streak even if today has no activity yet
+        if current_day not in activity_days:
+            current_day -= timedelta(days=1)
 
         while current_day in activity_days:
             streak += 1
@@ -895,12 +933,11 @@ class StudyInsightsView(APIView):
                 next_action = "You're doing well — try more advanced topics."
 
         # ========================================
-        # GOALS SYSTEM (NEW)
+        # GOALS SYSTEM
         # ========================================
 
         goals = []
 
-        # 🎯 Accuracy Goal
         target_accuracy = 80
         accuracy_progress = min(int((average_accuracy / target_accuracy) * 100), 100)
 
@@ -913,7 +950,6 @@ class StudyInsightsView(APIView):
             "status": "complete" if average_accuracy >= target_accuracy else "in_progress"
         })
 
-        # 📚 Consistency Goal
         target_days = 3
         consistency_progress = min(int((study_frequency / target_days) * 100), 100)
 
@@ -926,19 +962,18 @@ class StudyInsightsView(APIView):
             "status": "complete" if study_frequency >= target_days else "in_progress"
         })
 
-        # 🧩 Weak Topic Goal
         if accuracy_by_topic:
             weakest = min(accuracy_by_topic, key=lambda x: x["value"])
 
             topic_target = 60
-            topic_progress = min(int((weakest["value"] / topic_target) * 100), 100)
+            topic_progress_val = min(int((weakest["value"] / topic_target) * 100), 100)
 
             goals.append({
                 "type": "topic",
                 "label": f"Improve {weakest['label']} to {topic_target}%",
                 "current": weakest["value"],
                 "target": topic_target,
-                "progress": topic_progress,
+                "progress": topic_progress_val,
                 "status": "complete" if weakest["value"] >= topic_target else "in_progress"
             })
 
@@ -972,10 +1007,6 @@ class StudyInsightsView(APIView):
                 "You are making steady progress. Continue refining your understanding."
             )
 
-        # ========================================
-        # RESPONSE
-        # ========================================
-
         return Response({
             "study_frequency": study_frequency,
             "study_streak": streak,
@@ -987,8 +1018,6 @@ class StudyInsightsView(APIView):
             "common_mistakes": common_mistakes,
             "strengths": strengths,
             "ai_feedback": ai_feedback,
-
-            # SMART SYSTEM
             "trend": trend,
             "performance_level": performance_level,
             "next_action": next_action,

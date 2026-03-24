@@ -5,7 +5,6 @@ export default function StudyInsights() {
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
-
   const token = localStorage.getItem("access");
 
   useEffect(() => {
@@ -84,18 +83,23 @@ export default function StudyInsights() {
         {/* STATS */}
         <div className="stats-grid">
 
+          {/* 🔥 FIXED STUDY FREQUENCY */}
           <div className="stat-card">
-            <span>Study Frequency</span>
-            <strong>{data.study_frequency} days/week</strong>
+            <span>Study Activity</span>
+            <strong>{data.study_frequency} sessions</strong>
+            <small>Last 7 days</small>
 
             {data.study_frequency < 3 && (
-              <small className="warn-text">⚠️ Below recommended (3+ days)</small>
+              <small className="warn-text">
+                ⚠️ Below recommended (3+ sessions)
+              </small>
             )}
           </div>
 
+          {/* ACCURACY */}
           <div className="stat-card">
             <span>Average Accuracy</span>
-            <strong>{data.average_accuracy}%</strong>
+            <strong>{data.average_accuracy ?? 0}%</strong>
 
             {data.average_accuracy < 75 && (
               <small className="warn-text">🟡 Improving</small>
@@ -106,12 +110,14 @@ export default function StudyInsights() {
             )}
           </div>
 
+          {/* TOPICS */}
           <div className="stat-card">
             <span>Topics Mastered</span>
             <strong>{data.topics_mastered}</strong>
             <small>out of {data.topics_total}</small>
           </div>
 
+          {/* STREAK */}
           <div className="stat-card">
             <span>Study Streak</span>
             <strong>
@@ -138,7 +144,12 @@ export default function StudyInsights() {
               <div key={index} className="learning-goal-card">
 
                 <div className="learning-goal-header">
-                  <strong>{goal.label}</strong>
+                  <strong>
+                    {goal.type === "consistency"
+                      ? "Complete at least 3 study sessions/week"
+                      : goal.label}
+                  </strong>
+
                   <span className={`goal-status ${goal.status}`}>
                     {goal.status === "complete" ? "Completed" : "In Progress"}
                   </span>

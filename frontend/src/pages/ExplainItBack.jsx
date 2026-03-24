@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../api";
 import "../styles/explain-it-back.css";
 
@@ -7,21 +7,15 @@ import remarkGfm from "remark-gfm";
 
 export default function ExplainItBack() {
 
-  const SUBJECTS = useMemo(
-    () => [
-      { subject: "Mathematics", topic: "Quadratic Equations" },
-      { subject: "Science", topic: "Photosynthesis" },
-      { subject: "English", topic: "Essay Structure" },
-    ],
-    []
-  );
-
   const DIFFICULTIES = ["Beginner", "Intermediate", "Advanced"];
 
-  const [selectedIdx, setSelectedIdx] = useState(1);
-  const [difficulty, setDifficulty] = useState("Beginner");
+  const [subjects, setSubjects] = useState([]);
+  const [topics, setTopics] = useState([]);
 
-  const selected = SUBJECTS[selectedIdx];
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedTopic, setSelectedTopic] = useState("");
+
+  const [difficulty, setDifficulty] = useState("Beginner");
 
   const [prompt, setPrompt] = useState(null);
   const [loadingPrompt, setLoadingPrompt] = useState(false);
@@ -32,7 +26,55 @@ export default function ExplainItBack() {
   const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState(null);
 
+  /* ============================= */
+  /* FETCH SUBJECTS + TOPICS */
+  /* ============================= */
+
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [subjectsRes, topicsRes] = await Promise.all([
+          api.get("/api/subjects/"),
+          api.get("/api/topics/")
+        ]);
+
+        setSubjects(subjectsRes.data);
+        setTopics(topicsRes.data);
+
+        // set defaults
+        if (subjectsRes.data.length > 0) {
+          setSelectedSubject(subjectsRes.data[0].name);
+        }
+
+      } catch (err) {
+        console.error("Failed to load subjects/topics:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  /* ============================= */
+  /* FILTER TOPICS BY SUBJECT */
+  /* ============================= */
+
+  const filteredTopics = topics.filter(
+    (t) => t.subject === selectedSubject
+  );
+
+  useEffect(() => {
+    if (filteredTopics.length > 0) {
+      setSelectedTopic(filteredTopics[0].name);
+    }
+  }, [selectedSubject, topics]);
+
+  /* ============================= */
+  /* FETCH PROMPT */
+  /* ============================= */
+
+  useEffect(() => {
+
+    if (!selectedSubject || !selectedTopic) return;
 
     const fetchPrompt = async () => {
 
@@ -46,8 +88,8 @@ export default function ExplainItBack() {
 
         const res = await api.get("/api/explain/prompt/", {
           params: {
-            subject: selected.subject,
-            topic: selected.topic,
+            subject: selectedSubject,
+            topic: selectedTopic,
             difficulty,
           },
         });
@@ -74,8 +116,11 @@ export default function ExplainItBack() {
 
     fetchPrompt();
 
-  }, [selected.subject, selected.topic, difficulty]);
+  }, [selectedSubject, selectedTopic, difficulty]);
 
+  /* ============================= */
+  /* SUBMIT */
+  /* ============================= */
 
   const handleSubmit = async () => {
 
@@ -116,6 +161,9 @@ export default function ExplainItBack() {
 
   };
 
+  /* ============================= */
+  /* RENDER */
+  /* ============================= */
 
   return (
 
@@ -133,17 +181,31 @@ export default function ExplainItBack() {
 
           <div className="explain-controls">
 
+            {/* SUBJECT DROPDOWN */}
             <select
-              value={selectedIdx}
-              onChange={(e) => setSelectedIdx(Number(e.target.value))}
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
             >
-              {SUBJECTS.map((s, idx) => (
-                <option key={`${s.subject}-${s.topic}`} value={idx}>
-                  {s.subject} – {s.topic}
+              {subjects.map((s) => (
+                <option key={s.id} value={s.name}>
+                  {s.name}
                 </option>
               ))}
             </select>
 
+            {/* TOPIC DROPDOWN */}
+            <select
+              value={selectedTopic}
+              onChange={(e) => setSelectedTopic(e.target.value)}
+            >
+              {filteredTopics.map((t) => (
+                <option key={t.id} value={t.name}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+
+            {/* DIFFICULTY */}
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
@@ -163,7 +225,6 @@ export default function ExplainItBack() {
         <div className="explain-main">
 
           {/* CONCEPT PANEL */}
-
           <div className="concept-panel">
 
             <h2>💡 Concept Explanation</h2>
@@ -171,11 +232,8 @@ export default function ExplainItBack() {
             <div className="panel-scroll">
 
               {loadingPrompt ? (
-
                 <p>Loading…</p>
-
               ) : (
-
                 <>
                   {prompt?.title && <h3>{prompt.title}</h3>}
 
@@ -183,7 +241,6 @@ export default function ExplainItBack() {
                     {prompt?.concept_text || "No concept text found."}
                   </ReactMarkdown>
                 </>
-
               )}
 
             </div>
@@ -192,7 +249,6 @@ export default function ExplainItBack() {
 
 
           {/* USER PANEL */}
-
           <div className="user-panel">
 
             <h2>Your Explanation</h2>
@@ -200,8 +256,7 @@ export default function ExplainItBack() {
             <div className="panel-scroll">
 
               <p className="helper-text">
-                Now explain the concept in your own words. Focus on understanding,
-                not memorization.
+                Now explain the concept in your own words.
               </p>
 
               <textarea
@@ -242,19 +297,15 @@ export default function ExplainItBack() {
             <div className="feedback-card">
 
               {score !== null && (
-
                 <div className="feedback-score">
                   🎯 Your Score: {score} / 10
                 </div>
-
               )}
 
               <div className="feedback-content">
-
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {feedback}
                 </ReactMarkdown>
-
               </div>
 
             </div>
@@ -268,5 +319,4 @@ export default function ExplainItBack() {
     </div>
 
   );
-
 }
