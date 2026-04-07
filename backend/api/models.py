@@ -451,6 +451,21 @@ class UserAnswer(models.Model):
 # USER SETTINGS (EMAIL REMINDERS)
 # ========================================
 
+# class UserSettings(models.Model):
+#
+#     user = models.OneToOneField(
+#         User,
+#         on_delete=models.CASCADE,
+#         related_name="settings"
+#     )
+#
+#     notifications_enabled = models.BooleanField(default=False)
+#     reminder_time = models.TimeField(null=True, blank=True)
+#
+#     def __str__(self):
+#         return f"{self.user.username} settings"
+
+
 class UserSettings(models.Model):
 
     user = models.OneToOneField(
@@ -462,9 +477,11 @@ class UserSettings(models.Model):
     notifications_enabled = models.BooleanField(default=False)
     reminder_time = models.TimeField(null=True, blank=True)
 
+    # ✅ REPLACE this
+    last_sent_reminder_time = models.TimeField(null=True, blank=True)
+
     def __str__(self):
         return f"{self.user.username} settings"
-
 
 # ========================================
 # AUTO CREATE SETTINGS

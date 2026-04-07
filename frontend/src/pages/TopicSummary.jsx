@@ -15,6 +15,9 @@ export default function TopicSummary() {
 
   const token = localStorage.getItem("access");
 
+  // ==========================
+  // MARK PROGRESS
+  // ==========================
   const markSlideComplete = (slideIndex) => {
 
     if (!slides.length) return;
@@ -34,23 +37,21 @@ export default function TopicSummary() {
     }).catch(() => {});
   };
 
-
+  // ==========================
+  // LOAD TOPIC
+  // ==========================
   useEffect(() => {
 
     async function loadTopic() {
 
       setLoading(true);
 
-      // ==========================
       // OFFLINE MODE
-      // ==========================
-
       if (!navigator.onLine) {
 
         const cachedTopic = await getCachedTopic(topicSlug);
 
         if (cachedTopic) {
-
           const sortedSlides = (cachedTopic.slides || []).sort(
             (a, b) => a.order - b.order
           );
@@ -60,13 +61,9 @@ export default function TopicSummary() {
           setLoading(false);
           return;
         }
-
       }
 
-      // ==========================
       // ONLINE MODE
-      // ==========================
-
       try {
 
         const res = await fetch("http://127.0.0.1:8000/api/topics/", {
@@ -76,7 +73,6 @@ export default function TopicSummary() {
         });
 
         const topics = await res.json();
-
         const topic = topics.find(t => t.slug === topicSlug);
 
         if (!topic) {
@@ -92,53 +88,52 @@ export default function TopicSummary() {
         setSlides(sortedSlides);
         setCurrentSlide(0);
 
-        if (sortedSlides.length > 0) {
-          markSlideComplete(0);
-        }
-
       } catch {
 
         const cachedTopic = await getCachedTopic(topicSlug);
 
         if (cachedTopic) {
-
           const sortedSlides = (cachedTopic.slides || []).sort(
             (a, b) => a.order - b.order
           );
 
           setSlides(sortedSlides);
         }
-
       }
 
       setLoading(false);
-
     }
 
     loadTopic();
 
   }, [topicSlug, token]);
 
+  // ==========================
+  // ✅ TRACK PROGRESS (FIXED)
+  // ==========================
+  useEffect(() => {
+    if (slides.length > 0) {
+      markSlideComplete(currentSlide);
+    }
+  }, [currentSlide, slides]);
 
+  // ==========================
+  // NAVIGATION
+  // ==========================
   const handleNext = () => {
-
     const nextSlide = currentSlide + 1;
 
     if (nextSlide < slides.length) {
       setCurrentSlide(nextSlide);
-      markSlideComplete(nextSlide);
     }
-
   };
 
   const handlePrev = () => {
-
     const prevSlide = currentSlide - 1;
 
     if (prevSlide >= 0) {
       setCurrentSlide(prevSlide);
     }
-
   };
 
   const askAiTutor = () => {
@@ -152,10 +147,11 @@ export default function TopicSummary() {
         slideContent: slideContent
       }
     });
-
   };
 
-
+  // ==========================
+  // UI
+  // ==========================
   return (
 
     <div className="topic-summary-wrapper">
@@ -225,7 +221,5 @@ export default function TopicSummary() {
       </div>
 
     </div>
-
   );
 }
-

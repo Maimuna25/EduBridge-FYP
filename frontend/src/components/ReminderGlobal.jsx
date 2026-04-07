@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "../styles/reminder.css";
 
 export default function ReminderGlobal() {
 
@@ -42,17 +43,22 @@ export default function ReminderGlobal() {
     <>
       {showPopup && (
         <div className="popup-overlay">
-          <div className="popup-box">
-            <h2>📚 Study Reminder</h2>
-            <p>Time to continue your learning on EduBridge!</p>
+            <div className="popup-box">
 
-            <button
-              className="close-btn"
-              onClick={() => setShowPopup(false)}
-            >
-              Close
-            </button>
-          </div>
+                <div className="popup-icon">📚</div>
+
+                <h2>Study Reminder</h2>
+
+                <p>Time to continue your learning on <strong>EduBridge</strong></p>
+
+                <button
+                    className="close-btn"
+                    onClick={() => setShowPopup(false)}
+                >
+                    Continue Learning
+                </button>
+
+            </div>
         </div>
       )}
     </>

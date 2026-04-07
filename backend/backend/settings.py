@@ -162,3 +162,6 @@ EMAIL_HOST_PASSWORD = "csfajehedkvwolqe"  # 🔥 paste app password here
 CRONJOBS = [
     ('* * * * *', 'api.cron.check_and_send_reminders'),
 ]
+
+TIME_ZONE = "Europe/London"   # or your actual timezone
+USE_TZ = True

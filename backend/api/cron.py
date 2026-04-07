@@ -1,25 +1,85 @@
-from datetime import datetime
+from django.utils import timezone
 from .models import UserSettings
 from .utils import send_study_reminder_email
 
 
 def check_and_send_reminders():
+    try:
+        print("\n========== 🚀 CRON START ==========")
 
-    now = datetime.now().strftime("%H:%M")
+        now = timezone.localtime()
 
-    print(f"⏰ Checking reminders at {now}")
+        print(f"🌍 DJANGO TIME: {now}")
+        print(f"⏰ NOW: {now.hour}:{now.minute}")
 
-    settings = UserSettings.objects.filter(
-        notifications_enabled=True,
-        reminder_time__isnull=False
-    )
+        settings = UserSettings.objects.filter(
+            notifications_enabled=True,
+            reminder_time__isnull=False
+        )
 
-    for setting in settings:
+        print(f"👥 TOTAL SETTINGS FOUND: {settings.count()}")
 
-        reminder_time = setting.reminder_time.strftime("%H:%M")
+        if not settings.exists():
+            print("⚠️ No users with reminders enabled")
 
-        if reminder_time == now:
+        for setting in settings:
+            try:
+                print("\n------ 👤 CHECKING USER ------")
 
-            print(f"📧 Sending reminder to {setting.user.email}")
+                user = setting.user
 
-            send_study_reminder_email(setting.user)
+                print(f"👤 USER: {user.username}")
+                print(f"📧 EMAIL: {user.email}")
+                print(f"🔔 ENABLED: {setting.notifications_enabled}")
+                print(f"🎯 REMINDER TIME: {setting.reminder_time}")
+                print(f"📌 LAST SENT REMINDER: {setting.last_sent_reminder_time}")
+
+                reminder_time = setting.reminder_time
+
+                print(f"🧠 COMPARISON:")
+                print(f"   → NOW TIME: {now.time()}")
+                print(f"   → REMINDER TIME: {reminder_time}")
+
+                # ✅ Check if reminder time has passed
+                time_condition = reminder_time <= now.time()
+
+                # ✅ Check if already sent for this specific reminder time
+                already_sent_for_this_time = (
+                    setting.last_sent_reminder_time == reminder_time
+                )
+
+                print(f"⏱ TIME CONDITION (reminder <= now): {time_condition}")
+                print(f"📬 ALREADY SENT FOR THIS TIME: {already_sent_for_this_time}")
+
+                if time_condition and not already_sent_for_this_time:
+
+                    if not user.email:
+                        print(f"⚠️ No email for {user.username} — SKIPPING")
+                        continue
+
+                    print(f"📧 SENDING ONE-TIME REMINDER TO: {user.email}")
+
+                    try:
+                        send_study_reminder_email(user)
+                        print("✅ EMAIL SENT SUCCESSFULLY")
+
+                    except Exception as email_error:
+                        print(f"❌ EMAIL SEND FAILED: {email_error}")
+                        continue
+
+                    # ✅ Mark this reminder time as used
+                    setting.last_sent_reminder_time = reminder_time
+                    setting.save()
+
+                    print("✅ DATABASE UPDATED (marked as sent for this time)")
+
+                else:
+                    print("⛔ CONDITION NOT MET — skipping user")
+
+            except Exception as inner_error:
+                print(f"❌ USER ERROR: {inner_error}")
+
+        print("========== ✅ CRON END ==========\n")
+
+    except Exception as e:
+        print(f"🔥 CRON ERROR: {e}")

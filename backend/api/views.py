@@ -489,10 +489,6 @@ class SlideViewSet(viewsets.ModelViewSet):
 # TOPIC SLIDES
 # ========================================
 
-# ========================================
-# TOPIC SLIDES
-# ========================================
-
 class TopicSlidesView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -896,7 +892,6 @@ class StudyInsightsView(APIView):
         streak = 0
         current_day = now.date()
 
-        # 🔥 allow streak even if today has no activity yet
         if current_day not in activity_days:
             current_day -= timedelta(days=1)
 
