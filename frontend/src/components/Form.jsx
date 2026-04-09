@@ -3,15 +3,12 @@ import { useNavigate } from "react-router-dom";
 import api from "../api";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
 import "../styles/Form.css";
-// import LoadingIndicator from "./LoadingIndicator";
 
 export default function Form({ route, method, variant = "card" }) {
   const navigate = useNavigate();
 
-  // backend expects username/password (even if UI says "Email")
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
 
   const isLogin = method === "login";
@@ -28,12 +25,10 @@ export default function Form({ route, method, variant = "card" }) {
       const res = await api.post(route, { username, password });
 
       if (isLogin) {
-        // ✅ original “logic engine” behavior
         localStorage.setItem(ACCESS_TOKEN, res.data.access);
         localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
-        navigate("/dashboard"); // or "/" if you prefer
+        navigate("/dashboard");
       } else {
-        // ✅ original behavior: after register go to login
         navigate("/login");
       }
     } catch (error) {
@@ -43,7 +38,6 @@ export default function Form({ route, method, variant = "card" }) {
     }
   };
 
-  // ===== Card UI (your new design) =====
   if (variant === "card") {
     return (
       <div className="login-card">
@@ -51,7 +45,10 @@ export default function Form({ route, method, variant = "card" }) {
         <span className="login-card-subtitle">{subtitle}</span>
 
         <form onSubmit={handleSubmit}>
-          <label className="login-label">{isLogin ? "Email" : "Username"}</label>
+          {/* EMAIL */}
+          <label className="login-label">
+            {isLogin ? "Email" : "Username"}
+          </label>
           <input
             className="login-input"
             type="text"
@@ -62,6 +59,7 @@ export default function Form({ route, method, variant = "card" }) {
             required
           />
 
+          {/* PASSWORD */}
           <label className="login-label">Password</label>
           <input
             className="login-input"
@@ -73,21 +71,12 @@ export default function Form({ route, method, variant = "card" }) {
             required
           />
 
-          {isLogin && (
-            <div className="forgot-password">
-              <button
-                type="button"
-                className="link-btn"
-                onClick={() => navigate("/forgot-password")}
-              >
-                Forgot password?
-              </button>
-            </div>
-          )}
-
-          {/* {loading && <LoadingIndicator />} */}
-
-          <button className="primary-btn full" type="submit" disabled={loading}>
+          {/* SIGN IN BUTTON */}
+          <button
+            className="auth-primary-btn auth-full"
+            type="submit"
+            disabled={loading}
+          >
             {loading
               ? isLogin
                 ? "Signing in..."
@@ -97,18 +86,30 @@ export default function Form({ route, method, variant = "card" }) {
               : "Create Account"}
           </button>
 
+          {/* FORGOT PASSWORD (FIXED) */}
+          {isLogin && (
+            <div className="auth-forgot-text">
+              <span onClick={() => navigate("/forgot-password")}>
+                Forgot password?
+              </span>
+            </div>
+          )}
+
+          {/* DIVIDER */}
           <div className="divider">
             <span>or</span>
           </div>
 
+          {/* REGISTER */}
           <button
             type="button"
-            className="secondary-btn full"
+            className="auth-secondary-btn auth-full"
             onClick={() => navigate(isLogin ? "/register" : "/login")}
           >
             {isLogin ? "Create an Account" : "Go to Login"}
           </button>
 
+          {/* FOOTNOTE */}
           <small className="login-footnote">
             Designed for independent learners aged 18+
           </small>
@@ -117,19 +118,15 @@ export default function Form({ route, method, variant = "card" }) {
     );
   }
 
-  // ===== fallback simple layout =====
   return (
     <form onSubmit={handleSubmit}>
       <input
         value={username}
         onChange={(e) => setUsername(e.target.value)}
-        placeholder="username"
       />
       <input
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        placeholder="password"
-        type="password"
       />
       <button type="submit">{isLogin ? "Login" : "Register"}</button>
     </form>
