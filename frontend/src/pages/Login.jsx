@@ -3,17 +3,16 @@ import "../styles/loginPage.css";
 
 export default function Login() {
   return (
-    <div className="login-page">
+    <main className="login-page">
       <div className="login-wrapper">
-        {/* LEFT */}
-        <div className="login-left">
+
+        {/* LEFT SIDE - MARKETING / INFO */}
+        <section className="login-left">
           <h1>
             Learn Smarter,
             <br />
             Not Harder
           </h1>
-
-          <div className="accent-line" />
 
           <p className="subtitle">
             EduBridge is an AI-powered learning platform designed for adult learners
@@ -25,13 +24,18 @@ export default function Login() {
             <div>🧠 Explain-it-back learning</div>
             <div>⏱ Learn at your own pace</div>
           </div>
-        </div>
+        </section>
 
-        {/* RIGHT (real login logic lives in Form) */}
-        <div className="login-right">
-          <Form route="/api/token/" method="login" variant="card" />
-        </div>
+        {/* RIGHT SIDE - LOGIN FORM */}
+        <section className="login-right">
+          <Form
+            route="/api/token/"
+            method="login"
+            variant="card"
+          />
+        </section>
+
       </div>
-    </div>
+    </main>
   );
 }
