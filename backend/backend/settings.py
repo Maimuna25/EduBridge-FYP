@@ -55,12 +55,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "api",
+    # "api",
     "rest_framework",
     'corsheaders',
     'django_extensions',
     'django_crontab',
+    'django_rest_passwordreset',
+    'api.apps.ApiConfig'
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
