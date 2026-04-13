@@ -38,49 +38,80 @@ export default function Offline() {
 
   async function getCurrentUser() {
 
-    console.log("Fetching user...");
+    console.log("🔍 Fetching user...");
 
+    // 🚨 If OFFLINE → use fallback ONLY
+    if (!navigator.onLine) {
+      console.log("📴 Offline detected — using stored user");
+
+      const fallbackUser = localStorage.getItem("current_user");
+
+      if (fallbackUser) {
+        try {
+          const parsed = JSON.parse(fallbackUser);
+          console.log("✅ Loaded fallback user:", parsed);
+          setUserId(Number(parsed.id));
+        } catch {
+          console.log("⚠️ Fallback raw value:", fallbackUser);
+          setUserId(Number(fallbackUser));
+        }
+      } else {
+        console.warn("❌ No fallback user found in localStorage");
+      }
+
+      return;
+    }
+
+    // 🚨 If no token → fallback
     if (!token) {
-      console.log("No token found");
+      console.warn("⚠️ No token — using fallback");
+
+      const fallbackUser = localStorage.getItem("current_user");
+
+      if (fallbackUser) {
+        try {
+          const parsed = JSON.parse(fallbackUser);
+          setUserId(Number(parsed.id));
+        } catch {
+          setUserId(Number(fallbackUser));
+        }
+      }
+
       return;
     }
 
     try {
 
-      const res = await fetch(
-        "http://127.0.0.1:8000/api/user/",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const res = await fetch("http://127.0.0.1:8000/api/user/", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-      console.log("User response status:", res.status);
+      if (!res.ok) {
+        throw new Error("Bad response");
+      }
 
-      const text = await res.text();
+      const user = await res.json();
 
-      console.log("Raw user response:", text);
+      console.log("✅ API user:", user);
 
-      const user = JSON.parse(text);
+      // 🔥 Save for offline usage
+      localStorage.setItem("current_user", JSON.stringify(user));
 
-      console.log("User object:", user);
-
-      setUserId(user.id);
+      setUserId(Number(user.id));
 
     } catch (err) {
 
-      console.error("User fetch failed:", err);
+      console.error("❌ User fetch failed:", err);
 
-      /* fallback user */
       const fallbackUser = localStorage.getItem("current_user");
 
       if (fallbackUser) {
-
-        console.log("Using fallback user:", fallbackUser);
-
-        setUserId(fallbackUser);
-
+        try {
+          const parsed = JSON.parse(fallbackUser);
+          setUserId(Number(parsed.id));
+        } catch {
+          setUserId(Number(fallbackUser));
+        }
       }
 
     }
@@ -94,12 +125,9 @@ export default function Offline() {
 
   useEffect(() => {
 
-    if (!userId) {
-      console.log("No userId yet");
-      return;
-    }
+    console.log("👀 userId:", userId);
 
-    console.log("UserID ready:", userId);
+    if (userId === null) return;
 
     loadOfflineData(userId);
 
@@ -112,22 +140,26 @@ export default function Offline() {
 
   async function loadOfflineData(currentUserId) {
 
-    console.log("Loading offline data for user:", currentUserId);
+    console.log("📦 Loading offline data for:", currentUserId);
 
     const cachedQuizzes = await getCachedQuizzes(currentUserId);
     const cachedTopics = await getCachedTopics(currentUserId);
 
-    console.log("Cached quizzes:", cachedQuizzes);
-    console.log("Cached topics:", cachedTopics);
+    console.log("🧠 Cached quizzes:", cachedQuizzes);
+    console.log("🧠 Cached topics:", cachedTopics);
 
     setDownloadedQuizzes(cachedQuizzes);
     setDownloadedTopics(cachedTopics);
 
-    if (!token) return;
+    // 🚨 STOP if offline
+    if (!navigator.onLine || !token) {
+      console.log("📴 Offline mode — skipping API fetch");
+      return;
+    }
 
     try {
 
-      console.log("Fetching quizzes...");
+      console.log("🌐 Fetching quizzes...");
 
       const quizRes = await fetch(
         "http://127.0.0.1:8000/api/quizzes/",
@@ -136,8 +168,6 @@ export default function Offline() {
 
       const quizzes = await quizRes.json();
 
-      console.log("API quizzes:", quizzes);
-
       const cachedQuizIds = cachedQuizzes.map(q => q.id);
 
       setAvailableQuizzes(
@@ -145,7 +175,7 @@ export default function Offline() {
       );
 
 
-      console.log("Fetching topics...");
+      console.log("🌐 Fetching topics...");
 
       const topicRes = await fetch(
         "http://127.0.0.1:8000/api/topics/",
@@ -153,8 +183,6 @@ export default function Offline() {
       );
 
       const topics = await topicRes.json();
-
-      console.log("API topics:", topics);
 
       const cachedTopicSlugs = cachedTopics.map(t => t.slug);
 
@@ -164,7 +192,7 @@ export default function Offline() {
 
     } catch (err) {
 
-      console.error("API fetch failed:", err);
+      console.error("❌ API fetch failed:", err);
 
       setAvailableQuizzes([]);
       setAvailableTopics([]);
@@ -179,56 +207,39 @@ export default function Offline() {
   ========================= */
 
   async function handleQuizDownload(quiz) {
-
-    console.log("Downloading quiz:", quiz);
-
     if (!userId) return;
 
+    console.log("⬇️ Downloading quiz:", quiz);
+
     await cacheQuizzes([quiz], userId);
-
     loadOfflineData(userId);
-
   }
 
   async function handleTopicDownload(topic) {
-
-    console.log("Downloading topic:", topic);
-
     if (!userId) return;
 
+    console.log("⬇️ Downloading topic:", topic);
+
     await cacheTopics([topic], userId);
-
     loadOfflineData(userId);
-
   }
 
   async function handleRemoveQuiz(id) {
-
-    console.log("Removing quiz:", id);
-
     if (!userId) return;
 
+    console.log("🗑 Removing quiz:", id);
+
     await deleteCachedQuiz(id, userId);
-
     loadOfflineData(userId);
-
   }
 
 
   function openQuiz(id) {
-
-    console.log("Opening quiz:", id);
-
     navigate(`/quiz/${id}`);
-
   }
 
   function openTopic(slug) {
-
-    console.log("Opening topic:", slug);
-
     navigate(`/subjects/topic/${slug}`);
-
   }
 
 
@@ -237,6 +248,8 @@ export default function Offline() {
   ========================= */
 
   const filterItems = (items) => {
+
+    console.log("🔎 Filtering items:", items);
 
     return items.filter(item => {
 
@@ -255,6 +268,16 @@ export default function Offline() {
   };
 
 
+  /* =========================
+     DEBUG STATE
+  ========================= */
+
+  console.log("🎯 STATE");
+  console.log("userId:", userId);
+  console.log("downloadedTopics:", downloadedTopics);
+  console.log("downloadedQuizzes:", downloadedQuizzes);
+
+
   return (
 
     <div className="offline-wrapper">
@@ -262,43 +285,10 @@ export default function Offline() {
       <div className="offline-page">
 
         <div className="page-header">
-
           <h1>Offline Mode</h1>
-
           <span className="chip">
             Download quizzes and lessons to access them without internet.
           </span>
-
-        </div>
-
-
-        <div className="offline-controls">
-
-          <input
-            className="offline-search"
-            placeholder="Search quizzes or topics..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-
-          <div className="subject-filters">
-
-            {["all", "mathematics", "science", "english"].map(subject => (
-
-              <button
-                key={subject}
-                className={`filter-btn ${subjectFilter === subject ? "active" : ""}`}
-                onClick={() => setSubjectFilter(subject)}
-              >
-                {subject === "all"
-                  ? "All"
-                  : subject.charAt(0).toUpperCase() + subject.slice(1)}
-              </button>
-
-            ))}
-
-          </div>
-
         </div>
 
 
@@ -309,32 +299,28 @@ export default function Offline() {
           <div className="list-card">
 
             {filterItems(downloadedQuizzes).map(q => (
-
               <OfflineItem
                 key={`quiz-${q.id}`}
                 subject={q.subject}
                 subjectKey={(q.subject || "").toLowerCase()}
                 title={q.topic}
-                description={`Downloaded Topic Quiz`}
+                description="Downloaded Quiz"
                 downloaded
                 onOpen={() => openQuiz(q.id)}
                 onRemove={() => handleRemoveQuiz(q.id)}
               />
-
             ))}
 
             {filterItems(downloadedTopics).map(t => (
-
               <OfflineItem
                 key={`topic-${t.slug}`}
                 subject="Lesson"
                 subjectKey="lesson"
                 title={t.name || t.slug}
-                description="Downloaded Topic Reading"
+                description="Downloaded Topic"
                 downloaded
                 onOpen={() => openTopic(t.slug)}
               />
-
             ))}
 
           </div>
@@ -349,16 +335,14 @@ export default function Offline() {
           <div className="list-card">
 
             {filterItems(availableQuizzes).map(q => (
-
               <OfflineItem
                 key={q.id}
                 subject={q.subject}
                 subjectKey={(q.subject || "").toLowerCase()}
                 title={q.topic}
-                description={`Topic Quiz`}
+                description="Quiz"
                 onDownload={() => handleQuizDownload(q)}
               />
-
             ))}
 
           </div>
@@ -373,16 +357,14 @@ export default function Offline() {
           <div className="list-card">
 
             {filterItems(availableTopics).map(t => (
-
               <OfflineItem
                 key={t.slug}
                 subject="Lesson"
                 subjectKey="lesson"
                 title={t.name || t.slug}
-                description="Topic Reading"
+                description="Topic"
                 onDownload={() => handleTopicDownload(t)}
               />
-
             ))}
 
           </div>
@@ -398,10 +380,7 @@ export default function Offline() {
 }
 
 
-
-/* =================================
-   ITEM COMPONENT
-================================= */
+/* ================================= */
 
 function OfflineItem({
   subject,
@@ -430,9 +409,7 @@ function OfflineItem({
 
         <h4>{title}</h4>
 
-        <p className="muted">
-          {description}
-        </p>
+        <p className="muted">{description}</p>
 
       </div>
 
@@ -440,18 +417,12 @@ function OfflineItem({
 
         <div className="action-buttons">
 
-          <button
-            className="download-btn"
-            onClick={onOpen}
-          >
+          <button className="download-btn" onClick={onOpen}>
             Open
           </button>
 
           {onRemove && (
-            <button
-              className="remove-btn"
-              onClick={onRemove}
-            >
+            <button className="remove-btn" onClick={onRemove}>
               Remove
             </button>
           )}
@@ -466,7 +437,6 @@ function OfflineItem({
         >
           Download
         </button>
-
 
       )}
 
