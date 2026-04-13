@@ -6,7 +6,7 @@ export default function NavBar() {
     <aside className="sidebar">
       <div className="sidebar-header">
         <h1>EduBridge</h1>
-        <p>Adult Learning Platform</p>
+        <p>University Learning Platform</p>
       </div>
 
       <nav className="sidebar-nav">
