@@ -15,21 +15,47 @@ class Subject(models.Model):
 
 
 class Category(models.Model):
+
+    LEVEL_CHOICES = [
+        ("beginner", "Beginner"),
+        ("intermediate", "Intermediate"),
+        ("advanced", "Advanced"),
+    ]
+
+    DISCIPLINE_CHOICES = [
+        ("physics", "Physics"),
+        ("chemistry", "Chemistry"),
+        ("biology", "Biology"),
+    ]
+
     subject = models.ForeignKey(
         Subject,
         on_delete=models.CASCADE,
         related_name="categories"
     )
+
     name = models.CharField(max_length=100)
     slug = models.SlugField()
 
+    level = models.CharField(
+        max_length=20,
+        choices=LEVEL_CHOICES,
+        default="beginner"
+    )
+
+    # ✅ NEW
+    discipline = models.CharField(
+        max_length=50,
+        choices=DISCIPLINE_CHOICES,
+        blank=True,
+        null=True
+    )
+
     class Meta:
-        unique_together = ("subject", "slug")
-        verbose_name = "Category"
-        verbose_name_plural = "Categories"
+        unique_together = ("subject", "slug", "level")
 
     def __str__(self):
-        return f"{self.subject.name} - {self.name}"
+        return f"{self.subject.name} - {self.name} ({self.level})"
 
 
 class Topic(models.Model):

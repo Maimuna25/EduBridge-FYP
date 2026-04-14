@@ -309,7 +309,15 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ["id", "name", "slug", "subject", "topics"]
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "subject",
+            "level",        # ✅ ADD THIS
+            "discipline",   # ✅ ADD THIS (VERY IMPORTANT)
+            "topics",
+        ]
 
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -337,5 +345,5 @@ class TopicProgressSerializer(serializers.ModelSerializer):
             "topic_name",
             "subject",
             "progress_percent",
-            "last_viewed",
+            "updated_at",
         ]

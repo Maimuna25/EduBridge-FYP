@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProgressProvider } from "./pages/ProgressContext";
 
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AITutor from "./pages/AITutor";
@@ -21,6 +22,7 @@ import TopicSummary from "./pages/TopicSummary";
 import QuizResult from "./pages/QuizResult";
 
 import ReminderGlobal from "./components/ReminderGlobal"; // 🔥 NEW
+import ResetPassword from "./pages/ResetPassword";
 
 import "./i18n";
 import { syncAttempts } from "./utils/offlineManager";
@@ -105,7 +107,9 @@ export default function App() {
           {/* public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/logout" element={<Logout />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<RegisterAndLogout />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* protected routes with layout */}
           <Route

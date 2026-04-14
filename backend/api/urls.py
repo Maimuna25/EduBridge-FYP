@@ -44,6 +44,7 @@ urlpatterns = [
     # User
     path("user/register/", CreateUserView.as_view()),
     path("user/", CurrentUserView.as_view()),
+    path('password-reset/', include('django_rest_passwordreset.urls')),
 
 # 🔔 NEW: Reminder API
     path("reminder/set/", SetReminderView.as_view()),
