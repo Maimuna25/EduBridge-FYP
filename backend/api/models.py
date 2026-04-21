@@ -13,7 +13,6 @@ class Subject(models.Model):
     def __str__(self):
         return self.name
 
-
 class Category(models.Model):
 
     LEVEL_CHOICES = [
@@ -43,7 +42,6 @@ class Category(models.Model):
         default="beginner"
     )
 
-    # ✅ NEW
     discipline = models.CharField(
         max_length=50,
         choices=DISCIPLINE_CHOICES,
@@ -53,10 +51,11 @@ class Category(models.Model):
 
     class Meta:
         unique_together = ("subject", "slug", "level")
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"  # ✅ fixes "Categorys"
 
     def __str__(self):
         return f"{self.subject.name} - {self.name} ({self.level})"
-
 
 class Topic(models.Model):
     category = models.ForeignKey(
@@ -473,24 +472,6 @@ class UserAnswer(models.Model):
         return f"{self.attempt.user.username} – Q{self.question.id}"
 
 
-# ========================================
-# USER SETTINGS (EMAIL REMINDERS)
-# ========================================
-
-# class UserSettings(models.Model):
-#
-#     user = models.OneToOneField(
-#         User,
-#         on_delete=models.CASCADE,
-#         related_name="settings"
-#     )
-#
-#     notifications_enabled = models.BooleanField(default=False)
-#     reminder_time = models.TimeField(null=True, blank=True)
-#
-#     def __str__(self):
-#         return f"{self.user.username} settings"
-
 
 class UserSettings(models.Model):
 
@@ -520,3 +501,13 @@ from django.dispatch import receiver
 def create_user_settings(sender, instance, created, **kwargs):
     if created:
         UserSettings.objects.create(user=instance)
+
+class EmailVerification(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    attempts = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user.email} - Verified: {self.is_verified}"
