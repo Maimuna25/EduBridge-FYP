@@ -76,13 +76,10 @@
 }
 
 .chip {
+.chip {
   display: inline-block;
-  margin-top: 8px;
-  background: rgba(59,130,246,0.15);
-  color: var(--blue);
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 0.85rem;
+  margin-top: 6px;
+}
 }
 
 
@@ -109,24 +106,63 @@
 /* ============================= */
 
 .ai-insight {
-  background: linear-gradient(135deg, #1f2937, #020617);
-  color: var(--text-main);
+  border-radius: 18px;
+  padding: 1.6rem;
+
+  /* 🔥 adaptive background */
+  background: linear-gradient(
+    135deg,
+    rgba(59,130,246,0.12),
+    rgba(99,102,241,0.08)
+  );
+
   border: 1px solid var(--border);
+
+  color: var(--text-main);
+
+  box-shadow: var(--shadow-soft);
+
+  transition: 0.25s ease;
 }
 
-body:not(.dark) .ai-insight {
-  background: linear-gradient(135deg, #e0f2fe, #dbeafe);
-  color: #1e293b;
+/* subtle hover (matches cards) */
+.ai-insight:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* text inside */
+
+.ai-insight h3 {
+  color: var(--text-main);
+  font-weight: 700;
 }
 
 .ai-insight p {
-  opacity: 0.9;
+  color: var(--text-muted);
+  margin-top: 4px;
 }
+
+/* action line */
 
 .next-action {
   margin-top: 10px;
   font-weight: 600;
   color: var(--blue);
+}
+
+/* ============================= */
+/* DARK MODE ENHANCEMENT */
+/* ============================= */
+
+.dark .ai-insight {
+  background: linear-gradient(
+    135deg,
+    rgba(59,130,246,0.18),
+    rgba(99,102,241,0.12)
+  );
+
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
 
@@ -137,7 +173,7 @@ body:not(.dark) .ai-insight {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4,1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.5rem;
 }
 
