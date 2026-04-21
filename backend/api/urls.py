@@ -22,7 +22,7 @@ from .views import (
     TopicProgressView,
     ChatSessionsView,
     StudyInsightsView, CurrentUserView,
-    SetReminderView,
+    SetReminderView, NoteUpdate, VerifyEmailView, ResendCodeView,
 )
 
 
@@ -40,11 +40,14 @@ urlpatterns = [
     # Notes
     path("notes/", NoteListCreate.as_view()),
     path("notes/delete/<int:pk>/", NoteDelete.as_view()),
+    path("notes/<int:pk>/", NoteUpdate.as_view()),
 
     # User
     path("user/register/", CreateUserView.as_view()),
     path("user/", CurrentUserView.as_view()),
     path('password-reset/', include('django_rest_passwordreset.urls')),
+    path("user/verify-email/", VerifyEmailView.as_view()),
+    path("user/resend-code/", ResendCodeView.as_view()),
 
 # 🔔 NEW: Reminder API
     path("reminder/set/", SetReminderView.as_view()),

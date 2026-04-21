@@ -4,10 +4,17 @@ import api from "../api";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
 import "../styles/Form.css";
 
-export default function Form({ route, method, variant = "card" }) {
+export default function Form({
+  route,
+  method,
+  variant = "card",
+  onSuccess,
+  onError,
+}) {
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState(""); // ✅ NEW
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -22,17 +29,34 @@ export default function Form({ route, method, variant = "card" }) {
     setLoading(true);
 
     try {
-      const res = await api.post(route, { username, password });
+      // ✅ Send email ONLY for register
+      const payload = isLogin
+        ? { username, password }
+        : { username, email, password };
 
-      if (isLogin) {
-        localStorage.setItem(ACCESS_TOKEN, res.data.access);
-        localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
-        navigate("/dashboard");
+      console.log("SUBMIT PAYLOAD:", payload); // 🔍 DEBUG
+
+      const res = await api.post(route, payload);
+
+      console.log("RESPONSE:", res.data); // 🔍 DEBUG
+
+      if (onSuccess) {
+        onSuccess(res.data);
       } else {
-        navigate("/login");
+        if (isLogin) {
+          localStorage.setItem(ACCESS_TOKEN, res.data.access);
+          localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+          navigate("/dashboard");
+        }
       }
     } catch (error) {
-      alert(error);
+      console.error("FORM ERROR:", error.response?.data || error); // 🔍 DEBUG
+
+      if (onError) {
+        onError(error);
+      } else {
+        alert(error.response?.data?.error || "Something went wrong");
+      }
     } finally {
       setLoading(false);
     }
@@ -45,7 +69,23 @@ export default function Form({ route, method, variant = "card" }) {
         <span className="login-card-subtitle">{subtitle}</span>
 
         <form onSubmit={handleSubmit}>
-          {/* EMAIL */}
+
+          {/* ✅ EMAIL FIELD (REGISTER ONLY) */}
+          {!isLogin && (
+            <>
+              <label className="login-label">Email</label>
+              <input
+                className="login-input"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </>
+          )}
+
+          {/* USERNAME / EMAIL */}
           <label className="login-label">
             {isLogin ? "Email" : "Username"}
           </label>
@@ -71,7 +111,7 @@ export default function Form({ route, method, variant = "card" }) {
             required
           />
 
-          {/* SIGN IN BUTTON */}
+          {/* SUBMIT BUTTON */}
           <button
             className="auth-primary-btn auth-full"
             type="submit"
@@ -86,7 +126,7 @@ export default function Form({ route, method, variant = "card" }) {
               : "Create Account"}
           </button>
 
-          {/* FORGOT PASSWORD (FIXED) */}
+          {/* FORGOT PASSWORD */}
           {isLogin && (
             <div className="auth-forgot-text">
               <span onClick={() => navigate("/forgot-password")}>
@@ -100,7 +140,7 @@ export default function Form({ route, method, variant = "card" }) {
             <span>or</span>
           </div>
 
-          {/* REGISTER */}
+          {/* SWITCH LOGIN / REGISTER */}
           <button
             type="button"
             className="auth-secondary-btn auth-full"
@@ -109,7 +149,6 @@ export default function Form({ route, method, variant = "card" }) {
             {isLogin ? "Create an Account" : "Go to Login"}
           </button>
 
-          {/* FOOTNOTE */}
           <small className="login-footnote">
             Designed for independent learners aged 18+
           </small>
@@ -120,14 +159,8 @@ export default function Form({ route, method, variant = "card" }) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <input
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
-      <input
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+      <input value={username} onChange={(e) => setUsername(e.target.value)} />
+      <input value={password} onChange={(e) => setPassword(e.target.value)} />
       <button type="submit">{isLogin ? "Login" : "Register"}</button>
     </form>
   );

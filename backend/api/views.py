@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from datetime import timedelta, datetime
 from django.db.models import Count, Avg
 from django.db.models.functions import TruncDate, TruncHour
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import (
     Subject,
@@ -25,7 +26,8 @@ from .models import (
     TopicProgress,
     SlideCompletion,
     UserSettings,
-    UserActivity
+    UserActivity,
+    EmailVerification
 )
 
 from .serializers import (
@@ -77,10 +79,174 @@ class NoteDelete(generics.DestroyAPIView):
         return Note.objects.filter(author=self.request.user)
 
 
-class CreateUserView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+import random
+from django.conf import settings
+from django.core.mail import send_mail
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+
+class CreateUserView(APIView):
     permission_classes = [AllowAny]
+
+    def post(self, request):
+        username = request.data.get("username")
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        # ✅ Validate input
+        if not email or not username or not password:
+            return Response(
+                {"error": "Username, email and password are required"},
+                status=400
+            )
+
+        # 🚫 prevent duplicate email
+        if User.objects.filter(email=email).exists():
+            return Response({"error": "Email already registered"}, status=400)
+
+        # create inactive user
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            is_active=False
+        )
+
+        # generate code
+        code = str(random.randint(100000, 999999))
+
+        # ✅ safe create/update
+        verification, created = EmailVerification.objects.get_or_create(user=user)
+
+        verification.code = code
+        verification.is_verified = False
+        verification.created_at = timezone.now()
+        verification.attempts = 0
+        verification.save()
+
+        # send email
+
+        send_mail(
+            "EduBridge Verification Code",
+            f"Your verification code is: {code}",
+            settings.EMAIL_HOST_USER,  # ✅ FIXED
+            [email],
+            fail_silently=False,
+        )
+
+        return Response({
+            "message": "Verification code sent",
+            "email": email
+        })
+
+
+class VerifyEmailView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+        code = request.data.get("code")
+
+        # Missing data
+        if not email or not code:
+            return Response(
+                {"error": "Email and code are required"},
+                status=400
+            )
+
+        try:
+            user = User.objects.get(email=email)
+            verification = EmailVerification.objects.get(user=user)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=400)
+        except EmailVerification.DoesNotExist:
+            return Response({"error": "Verification record not found"}, status=400)
+
+        # Already verified
+        if verification.is_verified:
+            return Response(
+                {"error": "Account already verified. Please login."},
+                status=400
+            )
+
+        # ❌ Code expired (10 minutes)
+        if verification.created_at < timezone.now() - timedelta(minutes=10):
+            return Response(
+                {"error": "Verification code expired"},
+                status=400
+            )
+
+        # ❌ Too many attempts
+        if verification.attempts >= 5:
+            return Response(
+                {"error": "Too many attempts. Please request a new code."},
+                status=400
+            )
+
+        # ❌ Incorrect code
+        if verification.code != code:
+            verification.attempts += 1
+            verification.save()
+
+            return Response(
+                {"error": "Invalid verification code"},
+                status=400
+            )
+
+        # ✅ SUCCESS
+
+        verification.is_verified = True
+        verification.attempts = 0
+        verification.save()
+
+        user.is_active = True
+        user.save()
+
+        # ✅ Generate JWT tokens (auto login)
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            "message": "Account verified successfully",
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        })
+
+class ResendCodeView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        from django.utils import timezone
+        import random
+
+        email = request.data.get("email")
+
+        if not email:
+            return Response({"error": "Email required"}, status=400)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=400)
+
+        code = str(random.randint(100000, 999999))
+
+        verification, created = EmailVerification.objects.get_or_create(user=user)
+
+        verification.code = code
+        verification.is_verified = False
+        verification.created_at = timezone.now()
+        verification.attempts = 0
+        verification.save()
+
+        send_mail(
+            "Your new verification code",
+            f"Your new code is: {code}",
+            "noreply@edubridge.com",
+            [email],
+            fail_silently=False,
+        )
+
+        return Response({"message": "New code sent"})
 
 
 # ========================================
@@ -729,11 +895,11 @@ class StudyInsightsView(APIView):
                 seen.add(a.quiz_id)
 
         # ========================================
-        # STUDY FREQUENCY (FIXED)
+        # STUDY FREQUENCY
         # ========================================
+
         session_hours = set()
 
-        # Slide sessions
         slide_hours = (
             SlideCompletion.objects
             .filter(
@@ -744,10 +910,8 @@ class StudyInsightsView(APIView):
             .annotate(hour=TruncHour("completed_at"))
             .values_list("hour", flat=True)
         )
-
         session_hours.update(h for h in slide_hours if h)
 
-        # Quiz sessions
         quiz_hours = (
             UserQuizAttempt.objects
             .filter(
@@ -758,10 +922,8 @@ class StudyInsightsView(APIView):
             .annotate(hour=TruncHour("completed_at"))
             .values_list("hour", flat=True)
         )
-
         session_hours.update(h for h in quiz_hours if h)
 
-        # Other activity (AI / Explain / etc.)
         extra_hours = (
             UserActivity.objects
             .filter(
@@ -772,7 +934,6 @@ class StudyInsightsView(APIView):
             .annotate(hour=TruncHour("created_at"))
             .values_list("hour", flat=True)
         )
-
         session_hours.update(h for h in extra_hours if h)
 
         total_sessions = len(session_hours)
@@ -872,32 +1033,45 @@ class StudyInsightsView(APIView):
         ][:2]
 
         # ========================================
-        # STUDY STREAK
+        # STUDY STREAK (STRICT)
         # ========================================
 
         activity_days = set(
             SlideCompletion.objects
-            .filter(user=user)
+            .filter(user=user, completed_at__isnull=False)
             .annotate(day=TruncDate("completed_at"))
             .values_list("day", flat=True)
         )
 
         activity_days |= set(
             UserQuizAttempt.objects
-            .filter(user=user)
+            .filter(user=user, completed_at__isnull=False)
             .annotate(day=TruncDate("completed_at"))
             .values_list("day", flat=True)
         )
 
-        streak = 0
-        current_day = now.date()
+        activity_days |= set(
+            UserActivity.objects
+            .filter(user=user, created_at__isnull=False)
+            .annotate(day=TruncDate("created_at"))
+            .values_list("day", flat=True)
+        )
 
-        if current_day not in activity_days:
-            current_day -= timedelta(days=1)
+        today = now.date()
 
-        while current_day in activity_days:
-            streak += 1
-            current_day -= timedelta(days=1)
+        if today not in activity_days:
+            streak = 0
+        else:
+            sorted_days = sorted(activity_days, reverse=True)
+            streak = 0
+
+            for i, day in enumerate(sorted_days):
+                expected_day = today - timedelta(days=i)
+
+                if day == expected_day:
+                    streak += 1
+                else:
+                    break
 
         # ========================================
         # TREND DETECTION
@@ -941,20 +1115,48 @@ class StudyInsightsView(APIView):
             performance_level = "Advanced"
 
         # ========================================
-        # NEXT ACTION
+        # NEXT ACTION + AI FEEDBACK (ALIGNED)
         # ========================================
 
         next_action = "Keep practicing regularly."
 
         if accuracy_by_topic:
             weakest_topic = min(accuracy_by_topic, key=lambda x: x["value"])
+            weakest_label = weakest_topic["label"]
 
             if weakest_topic["value"] < 50:
-                next_action = f"Focus on improving {weakest_topic['label']}."
+                next_action = f"Focus on improving {weakest_label}."
             elif weakest_topic["value"] < 75:
-                next_action = f"Practice more questions in {weakest_topic['label']}."
+                next_action = f"Practice more questions in {weakest_label}."
             else:
                 next_action = "You're doing well — try more advanced topics."
+        else:
+            weakest_label = None
+
+        if trend == "declining":
+            ai_feedback = (
+                f"Your performance has dropped recently. Revisit {weakest_label or 'key topics'}."
+            )
+
+        elif trend == "improving":
+            ai_feedback = (
+                "Your performance is improving. Continue building momentum with consistent practice."
+            )
+
+        elif study_frequency < 2:
+            ai_feedback = (
+                "Your study consistency is low. Aim for at least 3 sessions per week."
+            )
+
+        elif weakest_label:
+            ai_feedback = (
+                f"You are struggling with {weakest_label}. Focus on strengthening this area."
+            )
+
+        else:
+            ai_feedback = (
+                "You are making steady progress. Continue refining your understanding."
+            )
 
         # ========================================
         # GOALS SYSTEM
@@ -1001,36 +1203,6 @@ class StudyInsightsView(APIView):
                 "status": "complete" if weakest["value"] >= topic_target else "in_progress"
             })
 
-        # ========================================
-        # SMART AI FEEDBACK
-        # ========================================
-
-        if trend == "declining":
-            ai_feedback = (
-                "Your performance has dropped recently. "
-                f"Revisit {common_mistakes[0] if common_mistakes else 'key topics'}."
-            )
-
-        elif trend == "improving":
-            ai_feedback = (
-                "Your performance is improving. Continue building momentum with consistent practice."
-            )
-
-        elif study_frequency < 2:
-            ai_feedback = (
-                "Your study consistency is low. Aim for at least 3 sessions per week."
-            )
-
-        elif common_mistakes:
-            ai_feedback = (
-                f"You are struggling with {common_mistakes[0]}. Focus on strengthening this area."
-            )
-
-        else:
-            ai_feedback = (
-                "You are making steady progress. Continue refining your understanding."
-            )
-
         return Response({
             "study_frequency": study_frequency,
             "study_streak": streak,
@@ -1047,7 +1219,6 @@ class StudyInsightsView(APIView):
             "next_action": next_action,
             "goals": goals
         })
-
 
 class SetReminderView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1076,3 +1247,8 @@ class SetReminderView(APIView):
         settings_obj.save()
 
         return Response({"status": "saved"})
+
+
+class NoteUpdate(generics.UpdateAPIView):
+    queryset = Note.objects.all()
+    serializer_class = NoteSerializer

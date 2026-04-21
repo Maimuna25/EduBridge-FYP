@@ -194,3 +194,31 @@
   }
 
 }
+
+/* ===== OTP INPUT ===== */
+
+.otp-container {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 1.5rem 0;
+}
+
+.otp-input {
+  width: 48px;
+  height: 56px;
+  font-size: 1.5rem;
+  text-align: center;
+
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+
+  transition: all 0.2s ease;
+}
+
+.otp-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}

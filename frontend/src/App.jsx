@@ -23,6 +23,7 @@ import QuizResult from "./pages/QuizResult";
 
 import ReminderGlobal from "./components/ReminderGlobal"; // 🔥 NEW
 import ResetPassword from "./pages/ResetPassword";
+import Verify from "./pages/Verify";
 
 import "./i18n";
 import { syncAttempts } from "./utils/offlineManager";
@@ -110,6 +111,7 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<RegisterAndLogout />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/verify" element={<Verify />} />
 
           {/* protected routes with layout */}
           <Route
