@@ -83,7 +83,7 @@ export default function StudyInsights() {
         {/* STATS */}
         <div className="stats-grid">
 
-          {/* 🔥 FIXED STUDY FREQUENCY */}
+          {/* STUDY FREQUENCY */}
           <div className="stat-card">
             <span>Study Activity</span>
             <strong>{data.study_frequency} sessions</strong>
@@ -128,6 +128,29 @@ export default function StudyInsights() {
 
             {data.study_streak === 0 && (
               <small className="danger-text">Start today 🔥</small>
+            )}
+          </div>
+
+          {/* 📈 TREND */}
+          <div className="stat-card">
+            <span>Trend</span>
+
+            <strong>
+              {data.trend === "improving" && "📈 Improving"}
+              {data.trend === "declining" && "📉 Declining"}
+              {data.trend === "stable" && "➖ Stable"}
+            </strong>
+
+            {data.trend === "improving" && (
+              <small className="success-text">Keep it up!</small>
+            )}
+
+            {data.trend === "declining" && (
+              <small className="danger-text">Needs attention</small>
+            )}
+
+            {data.trend === "stable" && (
+              <small className="warn-text">No major change</small>
             )}
           </div>
 
@@ -215,7 +238,6 @@ export default function StudyInsights() {
               ))
             )}
           </div>
-
 
           {/* WEAKNESSES */}
           <div className="chart-card">

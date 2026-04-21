@@ -13,12 +13,11 @@ export default function Settings() {
     setNotifications
   } = useContext(SettingsContext);
 
-  // ❌ removed default 19:00
   const [reminderTime, setReminderTime] = useState(
     localStorage.getItem("reminderTime") || ""
   );
 
-  // ===== API CALL =====
+  // ===== API CALL (REMINDER) =====
   const saveReminderToBackend = async (time, enabled) => {
     try {
       const token = localStorage.getItem("access");
@@ -40,6 +39,43 @@ export default function Settings() {
 
     } catch (err) {
       console.error("❌ Failed to save reminder:", err);
+    }
+  };
+
+  // ===== DELETE ACCOUNT =====
+  const handleDeleteAccount = async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete your account? This action cannot be undone."
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem("access");
+
+      const res = await fetch("http://127.0.0.1:8000/api/user/delete/", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        localStorage.clear();
+        sessionStorage.clear();
+
+        alert("Account deleted successfully");
+        window.location.href = "/";
+      } else {
+        const data = await res.json();
+        console.error(data);
+        alert("Failed to delete account");
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting account");
     }
   };
 
@@ -65,7 +101,7 @@ export default function Settings() {
   // ===== SAVE TIME =====
   useEffect(() => {
 
-    if (!reminderTime) return; // 🚫 prevent empty save
+    if (!reminderTime) return;
 
     localStorage.setItem("reminderTime", reminderTime);
 
@@ -109,8 +145,18 @@ export default function Settings() {
             </div>
 
             <div className="option-group">
-              <button className={`option ${theme === "light" ? "active" : ""}`} onClick={() => setTheme("light")}>Light</button>
-              <button className={`option ${theme === "dark" ? "active" : ""}`} onClick={() => setTheme("dark")}>Dark</button>
+              <button
+                className={`option ${theme === "light" ? "active" : ""}`}
+                onClick={() => setTheme("light")}
+              >
+                Light
+              </button>
+              <button
+                className={`option ${theme === "dark" ? "active" : ""}`}
+                onClick={() => setTheme("dark")}
+              >
+                Dark
+              </button>
             </div>
           </div>
 
@@ -121,9 +167,24 @@ export default function Settings() {
             </div>
 
             <div className="option-group">
-              <button className={`option ${textSize === "small" ? "active" : ""}`} onClick={() => setTextSize("small")}>Small</button>
-              <button className={`option ${textSize === "default" ? "active" : ""}`} onClick={() => setTextSize("default")}>Default</button>
-              <button className={`option ${textSize === "large" ? "active" : ""}`} onClick={() => setTextSize("large")}>Large</button>
+              <button
+                className={`option ${textSize === "small" ? "active" : ""}`}
+                onClick={() => setTextSize("small")}
+              >
+                Small
+              </button>
+              <button
+                className={`option ${textSize === "default" ? "active" : ""}`}
+                onClick={() => setTextSize("default")}
+              >
+                Default
+              </button>
+              <button
+                className={`option ${textSize === "large" ? "active" : ""}`}
+                onClick={() => setTextSize("large")}
+              >
+                Large
+              </button>
             </div>
           </div>
 
@@ -171,16 +232,27 @@ export default function Settings() {
 
           <h2>Account</h2>
 
-          <button
-            className="logout-btn"
-            onClick={() => {
-              localStorage.clear();
-              sessionStorage.clear();
-              window.location.href = "/";
-            }}
-          >
-            Log Out
-          </button>
+          <div className="account-actions">
+
+            <button
+              className="logout-btn"
+              onClick={() => {
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = "/";
+              }}
+            >
+              Log Out
+            </button>
+
+            <button
+              className="delete-btn"
+              onClick={handleDeleteAccount}
+            >
+              Delete Account
+            </button>
+
+          </div>
 
         </div>
 

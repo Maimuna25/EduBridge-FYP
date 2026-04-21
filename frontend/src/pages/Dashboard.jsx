@@ -1,12 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import Note from "./Note";
 import "../styles/dashboard.css";
 
 export default function Dashboard() {
-
   const navigate = useNavigate();
   const [showHelper, setShowHelper] = useState(false);
 
@@ -14,18 +11,18 @@ export default function Dashboard() {
   const [notes, setNotes] = useState([]);
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
-
   const [selectedNote, setSelectedNote] = useState(null);
+
+  // EDIT STATE
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
 
   // SUBJECT DATA
   const [subjects, setSubjects] = useState([]);
   const [topics, setTopics] = useState([]);
   const [progress, setProgress] = useState([]);
   const [recentTopics, setRecentTopics] = useState([]);
-
-  // =========================
-  // FETCH DATA
-  // =========================
 
   useEffect(() => {
     getNotes();
@@ -65,32 +62,23 @@ export default function Dashboard() {
     }
   };
 
-  // =========================
-  // BUILD RECENT TOPICS
-  // =========================
-
   const buildRecentTopics = () => {
     if (!topics.length || !progress.length) return;
 
     const merged = progress
       .map((p) => {
         const topic = topics.find((t) => t.slug === p.topic);
-
         if (!topic) return null;
 
-        let subject =
+        const subject =
           topic.subject_name ||
           topic.subject ||
           topic.category?.subject ||
           "";
 
-        if (typeof subject === "object") {
-          subject = subject?.name || "";
-        }
-
         return {
           title: topic.name,
-          percent: p.progress,
+          percent: p.progress ?? 0,
           subject: String(subject),
           lastAccessed: p.updated_at || p.created_at,
         };
@@ -104,9 +92,7 @@ export default function Dashboard() {
     setRecentTopics(merged.slice(0, 4));
   };
 
-  // =========================
-  // NOTES
-  // =========================
+  // ================= NOTES =================
 
   const getNotes = () => {
     api
@@ -139,17 +125,23 @@ export default function Dashboard() {
       .catch((err) => alert(err));
   };
 
-  // =========================
-  // NAVIGATION
-  // =========================
+  const updateNote = () => {
+    api
+      .put(`/api/notes/${selectedNote.id}/`, {
+        title: editTitle,
+        content: editContent,
+      })
+      .then(() => {
+        getNotes();
+        setIsEditing(false);
+        setSelectedNote(null);
+      })
+      .catch((err) => alert(err));
+  };
 
   const goToSubject = (subject) => {
     navigate("/subjects", { state: { subject } });
   };
-
-  // =========================
-  // RENDER
-  // =========================
 
   return (
     <div className="dashboard-page">
@@ -158,15 +150,14 @@ export default function Dashboard() {
         {/* HEADER */}
         <div className="dashboard-header">
           <h1>Welcome Back</h1>
-          <p>
-            <span className="chip">Continue your learning journey in Mathematics, Science, and Chemistry</span>
-          </p>
+          <span className="chip">
+            Explain a topic in your own words to test your understanding.
+          </span>
         </div>
 
         {/* SUBJECT CARDS */}
         <section className="section">
           <div className="subject-cards">
-
             <div className="subject-card" onClick={() => goToSubject("mathematics")}>
               📘
               <div>
@@ -190,55 +181,42 @@ export default function Dashboard() {
                 <span>Continue learning</span>
               </div>
             </div>
-
           </div>
         </section>
 
         {/* QUICK ACTIONS */}
         <section className="section">
           <h2>Quick Actions</h2>
-
           <div className="quick-actions">
-
             <div className="quick-card" onClick={() => navigate("/ai-tutor")}>
               <strong>Ask AI Tutor</strong>
-              <p>Get help with any topic</p>
+              <p>Get help instantly</p>
             </div>
 
             <div className="quick-card" onClick={() => navigate("/explain-it-back")}>
               <strong>Explain It Back</strong>
-              <p>Test your understanding</p>
+              <p>Test understanding</p>
             </div>
 
             <div className="quick-card" onClick={() => navigate("/quizzes")}>
               <strong>Take a Quiz</strong>
-              <p>Practice your knowledge</p>
+              <p>Practice knowledge</p>
             </div>
-
           </div>
         </section>
 
         {/* RECENT TOPICS */}
         <section className="section">
-          <h2>Recent Topics Studied</h2>
+          <h2>Recent Topics</h2>
 
           <div className="progress-list">
-
-            {recentTopics.length === 0 && (
-              <p className="empty-text">
-                Start learning topics to see your progress here.
-              </p>
+            {recentTopics.length === 0 ? (
+              <p>No progress yet.</p>
+            ) : (
+              recentTopics.map((topic, index) => (
+                <Progress key={index} {...topic} />
+              ))
             )}
-
-            {recentTopics.map((topic, index) => (
-              <Progress
-                key={index}
-                title={topic.title}
-                percent={topic.percent}
-                subject={topic.subject}
-              />
-            ))}
-
           </div>
         </section>
 
@@ -249,39 +227,38 @@ export default function Dashboard() {
           <div className="notes-grid">
 
             <div className="notes-list">
-
               {notes.length === 0 ? (
-                <p className="notes-empty">
-                  No notes yet. Create your first one 👇
-                </p>
+                <p>No notes yet</p>
               ) : (
                 notes.map((note) => (
-
                   <div
                     key={note.id}
                     className="note-card clickable"
-                    onClick={() => setSelectedNote(note)}
+                    onClick={() => {
+                      setSelectedNote(note);
+                      setEditTitle(note.title);
+                      setEditContent(note.content);
+                    }}
                   >
                     <h4>{note.title}</h4>
+                    <p>{note.content}</p>
 
-                    <p>
-                      {note.content.length > 80
-                        ? note.content.substring(0, 80) + "..."
-                        : note.content}
-                    </p>
+                    <span className="note-date">
+                      Last edited:{" "}
+                      {new Date(note.updated_at || note.created_at).toLocaleDateString()}
+                      <span className="note-time">
+                        {new Date(note.updated_at || note.created_at).toLocaleTimeString()}
+                      </span>
+                    </span>
                   </div>
-
                 ))
               )}
-
             </div>
 
             <div className="notes-create">
-
               <h3>Create a Note</h3>
 
               <form onSubmit={createNote}>
-
                 <label>Title</label>
                 <input
                   value={title}
@@ -296,44 +273,75 @@ export default function Dashboard() {
                   required
                 />
 
-                <button className="primary-btn">
-                  Save Note
-                </button>
-
+                <button className="primary-btn">Save Note</button>
               </form>
-
             </div>
+
           </div>
         </section>
 
       </div>
 
       {/* NOTE POPUP */}
-
       {selectedNote && (
-
         <div
           className="note-popup-overlay"
           onClick={() => setSelectedNote(null)}
         >
-
           <div
             className="note-popup"
             onClick={(e) => e.stopPropagation()}
           >
 
-            <h3>{selectedNote.title}</h3>
+            {isEditing ? (
+              <>
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                />
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                />
+              </>
+            ) : (
+              <>
+                <h3>{selectedNote.title}</h3>
 
-            <p>{selectedNote.content}</p>
+                <span className="note-date">
+                  Last edited:{" "}
+                  {new Date(
+                    selectedNote.updated_at || selectedNote.created_at
+                  ).toLocaleString()}
+                </span>
+
+                <p>{selectedNote.content}</p>
+              </>
+            )}
 
             <div className="note-popup-actions">
-
               <button
                 className="secondary-btn"
                 onClick={() => setSelectedNote(null)}
               >
                 Close
               </button>
+
+              {!isEditing ? (
+                <button
+                  className="edit-btn"
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit
+                </button>
+              ) : (
+                <button
+                  className="primary-btn"
+                  onClick={updateNote}
+                >
+                  Save
+                </button>
+              )}
 
               <button
                 className="danger-btn"
@@ -344,20 +352,14 @@ export default function Dashboard() {
               >
                 Delete
               </button>
-
             </div>
 
           </div>
-
         </div>
-
       )}
 
       {/* AI HELPER */}
-      <div
-        className="ai-helper"
-        onClick={() => setShowHelper(true)}
-      >
+      <div className="ai-helper" onClick={() => setShowHelper(true)}>
         🤖 Need help?
       </div>
 
@@ -370,15 +372,10 @@ export default function Dashboard() {
             className="ai-popup"
             onClick={(e) => e.stopPropagation()}
           >
-
             <h3>Need assistance?</h3>
-
-            <p>
-              Would you like help from the AI Tutor with a topic?
-            </p>
+            <p>Would you like help from the AI Tutor?</p>
 
             <div className="popup-actions">
-
               <button
                 className="primary-btn"
                 onClick={() => navigate("/ai-tutor")}
@@ -392,29 +389,24 @@ export default function Dashboard() {
               >
                 Cancel
               </button>
-
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
 
+/* ===== PROGRESS COMPONENT ===== */
+
 function Progress({ title, percent, subject }) {
-
-  const colorMap = {
-    mathematics: "#2563eb",
-    science: "#16a34a",
-    english: "#7c3aed",
-  };
-
   const getColor = () => {
     const name = (subject || "").toLowerCase();
 
-    if (name.includes("math")) return colorMap.mathematics;
-    if (name.includes("science")) return colorMap.science;
-    if (name.includes("english")) return colorMap.english;
+    if (name.includes("math")) return "#2563eb";
+    if (name.includes("science")) return "#16a34a";
+    if (name.includes("english")) return "#7c3aed";
 
     return "#2563eb";
   };
@@ -440,4 +432,3 @@ function Progress({ title, percent, subject }) {
     </div>
   );
 }
-
