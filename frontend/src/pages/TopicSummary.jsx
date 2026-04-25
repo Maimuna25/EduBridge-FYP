@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "../styles/TopicSummary.css";
 
-import { getCachedTopic } from "../utils/offlineManager";
+import { getCachedTopics } from "../utils/offlineManager";
 
 export default function TopicSummary() {
 
@@ -12,17 +12,32 @@ export default function TopicSummary() {
   const [slides, setSlides] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
 
   const token = localStorage.getItem("access");
+
+  // ==========================
+  // GET USER (IMPORTANT FOR CACHE)
+  // ==========================
+  useEffect(() => {
+    const stored = localStorage.getItem("current_user");
+
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setUserId(Number(parsed.id));
+      } catch {
+        setUserId(Number(stored));
+      }
+    }
+  }, []);
 
   // ==========================
   // MARK PROGRESS
   // ==========================
   const markSlideComplete = (slideIndex) => {
 
-    if (!slides.length) return;
-
-    const slidesCompleted = slideIndex + 1;
+    if (!slides.length || !navigator.onLine) return;
 
     fetch("http://127.0.0.1:8000/api/progress/update/", {
       method: "POST",
@@ -32,27 +47,42 @@ export default function TopicSummary() {
       },
       body: JSON.stringify({
         topic_slug: topicSlug,
-        slides_completed: slidesCompleted
+        slides_completed: slideIndex + 1
       }),
     }).catch(() => {});
   };
 
   // ==========================
-  // LOAD TOPIC
+  // LOAD TOPIC (FIXED)
   // ==========================
   useEffect(() => {
 
+    if (!topicSlug || userId === null) return;
+
     async function loadTopic() {
+
+      console.log("📍 Loading topic:", topicSlug);
 
       setLoading(true);
 
-      // OFFLINE MODE
+      // ==========================
+      // 📴 OFFLINE FIRST
+      // ==========================
       if (!navigator.onLine) {
 
-        const cachedTopic = await getCachedTopic(topicSlug);
+        console.log("📴 Offline mode");
 
-        if (cachedTopic) {
-          const sortedSlides = (cachedTopic.slides || []).sort(
+        const cachedTopics = await getCachedTopics(userId);
+
+        console.log("🧠 Cached topics:", cachedTopics);
+
+        const topic = cachedTopics.find(t => t.slug === topicSlug);
+
+        if (topic && topic.slides) {
+
+          console.log("✅ Found topic in cache:", topic);
+
+          const sortedSlides = topic.slides.sort(
             (a, b) => a.order - b.order
           );
 
@@ -61,10 +91,16 @@ export default function TopicSummary() {
           setLoading(false);
           return;
         }
+
+        console.warn("❌ Topic not found in cache or missing slides");
       }
 
-      // ONLINE MODE
+      // ==========================
+      // 🌐 ONLINE
+      // ==========================
       try {
+
+        console.log("🌐 Fetching from API");
 
         const res = await fetch("http://127.0.0.1:8000/api/topics/", {
           headers: {
@@ -81,6 +117,8 @@ export default function TopicSummary() {
           return;
         }
 
+        console.log("✅ Loaded from API:", topic);
+
         const sortedSlides = (topic.slides || []).sort(
           (a, b) => a.order - b.order
         );
@@ -88,16 +126,26 @@ export default function TopicSummary() {
         setSlides(sortedSlides);
         setCurrentSlide(0);
 
-      } catch {
+      } catch (err) {
 
-        const cachedTopic = await getCachedTopic(topicSlug);
+        console.error("❌ API failed, trying cache", err);
 
-        if (cachedTopic) {
-          const sortedSlides = (cachedTopic.slides || []).sort(
+        // fallback to cache
+        const cachedTopics = await getCachedTopics(userId);
+        const topic = cachedTopics.find(t => t.slug === topicSlug);
+
+        if (topic && topic.slides) {
+
+          console.log("✅ Fallback cache success");
+
+          const sortedSlides = topic.slides.sort(
             (a, b) => a.order - b.order
           );
 
           setSlides(sortedSlides);
+        } else {
+          console.error("❌ No cached fallback available");
+          setSlides([]);
         }
       }
 
@@ -106,10 +154,10 @@ export default function TopicSummary() {
 
     loadTopic();
 
-  }, [topicSlug, token]);
+  }, [topicSlug, token, userId]);
 
   // ==========================
-  // ✅ TRACK PROGRESS (FIXED)
+  // TRACK PROGRESS
   // ==========================
   useEffect(() => {
     if (slides.length > 0) {
@@ -121,30 +169,25 @@ export default function TopicSummary() {
   // NAVIGATION
   // ==========================
   const handleNext = () => {
-    const nextSlide = currentSlide + 1;
-
-    if (nextSlide < slides.length) {
-      setCurrentSlide(nextSlide);
+    if (currentSlide < slides.length - 1) {
+      setCurrentSlide(prev => prev + 1);
     }
   };
 
   const handlePrev = () => {
-    const prevSlide = currentSlide - 1;
-
-    if (prevSlide >= 0) {
-      setCurrentSlide(prevSlide);
+    if (currentSlide > 0) {
+      setCurrentSlide(prev => prev - 1);
     }
   };
 
   const askAiTutor = () => {
-
     const slideContent = slides[currentSlide]?.content;
 
     navigate("/ai-tutor", {
       state: {
         topic: topicSlug,
         slideNumber: currentSlide + 1,
-        slideContent: slideContent
+        slideContent
       }
     });
   };
@@ -175,13 +218,13 @@ export default function TopicSummary() {
 
         ) : slides.length === 0 ? (
 
-          <p>No slides available.</p>
+          <p>No slides available (offline or not downloaded).</p>
 
         ) : (
 
           <>
             <div className="slide-card">
-              <p>{slides[currentSlide].content}</p>
+              <p>{slides[currentSlide]?.content}</p>
             </div>
 
             <div className="slide-progress">
@@ -214,7 +257,6 @@ export default function TopicSummary() {
               </button>
 
             </div>
-
           </>
         )}
 

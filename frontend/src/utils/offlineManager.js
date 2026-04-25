@@ -20,7 +20,26 @@ const dbPromise = openDB("eduBridgeDB", 2, {
 
 
 // ============================
-// QUIZ STORAGE (USER SPECIFIC)
+// HELPER: GET CURRENT USER ID
+// ============================
+
+function getUserId(userId) {
+  if (userId) return userId;
+
+  const stored = localStorage.getItem("current_user");
+
+  if (!stored) return null;
+
+  try {
+    return JSON.parse(stored).id;
+  } catch {
+    return Number(stored);
+  }
+}
+
+
+// ============================
+// QUIZ STORAGE
 // ============================
 
 export async function cacheQuizzes(quizzes, userId) {
@@ -28,57 +47,65 @@ export async function cacheQuizzes(quizzes, userId) {
   const db = await dbPromise;
   const tx = db.transaction("quizzes", "readwrite");
 
-  quizzes.forEach(q =>
+  quizzes.forEach(q => {
     tx.store.put({
       ...q,
       userId
-    })
-  );
+    });
+  });
 
   await tx.done;
-
 }
 
 export async function getCachedQuizzes(userId) {
 
+  const uid = getUserId(userId);
+  if (!uid) return [];
+
   const db = await dbPromise;
   const quizzes = await db.getAll("quizzes");
 
-  return quizzes.filter(q => q.userId === userId);
-
+  return quizzes.filter(q => q.userId === uid);
 }
 
 export async function getCachedQuiz(id, userId) {
 
+  const uid = getUserId(userId);
+  if (!uid) return null;
+
   const db = await dbPromise;
+
   const quiz = await db.get("quizzes", id);
 
-  if (quiz && quiz.userId === userId) {
+  console.log("📦 Cached quiz from DB:", quiz);
+
+  if (quiz && quiz.userId === uid) {
     return quiz;
   }
 
   return null;
-
 }
 
 export async function deleteCachedQuiz(id, userId) {
 
+  const uid = getUserId(userId);
+  if (!uid) return;
+
   const db = await dbPromise;
   const quiz = await db.get("quizzes", id);
 
-  if (quiz && quiz.userId === userId) {
+  if (quiz && quiz.userId === uid) {
 
     const tx = db.transaction("quizzes", "readwrite");
     await tx.store.delete(id);
     await tx.done;
 
   }
-
 }
 
 
 // ============================
-// TOPIC STORAGE (USER SPECIFIC)
+// TOPIC STORAGE
 // ============================
 
 export async function cacheTopics(topics, userId) {
@@ -86,70 +113,79 @@ export async function cacheTopics(topics, userId) {
   const db = await dbPromise;
   const tx = db.transaction("topics", "readwrite");
 
-  topics.forEach(t =>
+  topics.forEach(t => {
     tx.store.put({
       ...t,
       userId
-    })
-  );
+    });
+  });
 
   await tx.done;
-
 }
 
 export async function getCachedTopics(userId) {
 
+  const uid = getUserId(userId);
+  if (!uid) return [];
+
   const db = await dbPromise;
   const topics = await db.getAll("topics");
 
-  return topics.filter(t => t.userId === userId);
-
+  return topics.filter(t => t.userId === uid);
 }
 
 export async function getCachedTopic(slug, userId) {
 
+  const uid = getUserId(userId);
+  if (!uid) return null;
+
   const db = await dbPromise;
+
   const topic = await db.get("topics", slug);
 
-  if (topic && topic.userId === userId) {
+  if (topic && topic.userId === uid) {
     return topic;
   }
 
   return null;
-
 }
 
 
 // ============================
-// OFFLINE ATTEMPTS (USER SPECIFIC)
+// OFFLINE ATTEMPTS
 // ============================
 
 export async function saveOfflineAttempt(attempt, userId) {
+
+  const uid = getUserId(userId);
+  if (!uid) return;
 
   const db = await dbPromise;
   const tx = db.transaction("attempts", "readwrite");
 
   await tx.store.add({
     ...attempt,
-    userId
+    userId: uid
   });
 
   await tx.done;
-
 }
 
 
 // ============================
-// SYNC ATTEMPTS (USER SPECIFIC)
+// SYNC ATTEMPTS
 // ============================
 
 export async function syncAttempts(userId) {
+
+  const uid = getUserId(userId);
+  if (!uid) return;
 
   const db = await dbPromise;
 
   const attempts = await db.getAll("attempts");
 
-  const userAttempts = attempts.filter(a => a.userId === userId);
+  const userAttempts = attempts.filter(a => a.userId === uid);
 
   for (const attempt of userAttempts) {
 
@@ -170,5 +206,4 @@ export async function syncAttempts(userId) {
   }
 
   await tx.done;
-
 }

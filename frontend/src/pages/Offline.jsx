@@ -26,7 +26,6 @@ export default function Offline() {
   const [search, setSearch] = useState("");
   const [subjectFilter, setSubjectFilter] = useState("all");
 
-
   /* =========================
      FETCH CURRENT USER
   ========================= */
@@ -35,37 +34,9 @@ export default function Offline() {
     getCurrentUser();
   }, []);
 
-
   async function getCurrentUser() {
 
-    console.log("🔍 Fetching user...");
-
-    // 🚨 If OFFLINE → use fallback ONLY
-    if (!navigator.onLine) {
-      console.log("📴 Offline detected — using stored user");
-
-      const fallbackUser = localStorage.getItem("current_user");
-
-      if (fallbackUser) {
-        try {
-          const parsed = JSON.parse(fallbackUser);
-          console.log("✅ Loaded fallback user:", parsed);
-          setUserId(Number(parsed.id));
-        } catch {
-          console.log("⚠️ Fallback raw value:", fallbackUser);
-          setUserId(Number(fallbackUser));
-        }
-      } else {
-        console.warn("❌ No fallback user found in localStorage");
-      }
-
-      return;
-    }
-
-    // 🚨 If no token → fallback
-    if (!token) {
-      console.warn("⚠️ No token — using fallback");
-
+    if (!navigator.onLine || !token) {
       const fallbackUser = localStorage.getItem("current_user");
 
       if (fallbackUser) {
@@ -76,33 +47,20 @@ export default function Offline() {
           setUserId(Number(fallbackUser));
         }
       }
-
       return;
     }
 
     try {
-
       const res = await fetch("http://127.0.0.1:8000/api/user/", {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      if (!res.ok) {
-        throw new Error("Bad response");
-      }
-
       const user = await res.json();
 
-      console.log("✅ API user:", user);
-
-      // 🔥 Save for offline usage
       localStorage.setItem("current_user", JSON.stringify(user));
-
       setUserId(Number(user.id));
 
-    } catch (err) {
-
-      console.error("❌ User fetch failed:", err);
-
+    } catch {
       const fallbackUser = localStorage.getItem("current_user");
 
       if (fallbackUser) {
@@ -113,58 +71,32 @@ export default function Offline() {
           setUserId(Number(fallbackUser));
         }
       }
-
     }
-
   }
 
-
-  /* =========================
-     LOAD DATA AFTER USER EXISTS
-  ========================= */
+  /* ========================= */
 
   useEffect(() => {
-
-    console.log("👀 userId:", userId);
-
-    if (userId === null) return;
-
-    loadOfflineData(userId);
-
+    if (userId !== null) {
+      loadOfflineData(userId);
+    }
   }, [userId]);
 
-
-  /* =========================
-     LOAD OFFLINE + API DATA
-  ========================= */
-
   async function loadOfflineData(currentUserId) {
-
-    console.log("📦 Loading offline data for:", currentUserId);
 
     const cachedQuizzes = await getCachedQuizzes(currentUserId);
     const cachedTopics = await getCachedTopics(currentUserId);
 
-    console.log("🧠 Cached quizzes:", cachedQuizzes);
-    console.log("🧠 Cached topics:", cachedTopics);
-
     setDownloadedQuizzes(cachedQuizzes);
     setDownloadedTopics(cachedTopics);
 
-    // 🚨 STOP if offline
-    if (!navigator.onLine || !token) {
-      console.log("📴 Offline mode — skipping API fetch");
-      return;
-    }
+    if (!navigator.onLine || !token) return;
 
     try {
 
-      console.log("🌐 Fetching quizzes...");
-
-      const quizRes = await fetch(
-        "http://127.0.0.1:8000/api/quizzes/",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const quizRes = await fetch("http://127.0.0.1:8000/api/quizzes/", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       const quizzes = await quizRes.json();
 
@@ -174,13 +106,9 @@ export default function Offline() {
         quizzes.filter(q => !cachedQuizIds.includes(q.id))
       );
 
-
-      console.log("🌐 Fetching topics...");
-
-      const topicRes = await fetch(
-        "http://127.0.0.1:8000/api/topics/",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const topicRes = await fetch("http://127.0.0.1:8000/api/topics/", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       const topics = await topicRes.json();
 
@@ -190,67 +118,69 @@ export default function Offline() {
         topics.filter(t => !cachedTopicSlugs.includes(t.slug))
       );
 
-    } catch (err) {
-
-      console.error("❌ API fetch failed:", err);
-
+    } catch {
       setAvailableQuizzes([]);
       setAvailableTopics([]);
-
     }
-
   }
 
-
   /* =========================
-     DOWNLOAD FUNCTIONS
+     ACTIONS
   ========================= */
 
+  // 🔥 FIXED HERE
   async function handleQuizDownload(quiz) {
     if (!userId) return;
 
-    console.log("⬇️ Downloading quiz:", quiz);
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/quizzes/${quiz.id}/`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
 
-    await cacheQuizzes([quiz], userId);
-    loadOfflineData(userId);
+      const fullQuiz = await res.json();
+
+      console.log("✅ Full quiz downloaded:", fullQuiz);
+
+      await cacheQuizzes([fullQuiz], userId);
+
+      loadOfflineData(userId);
+
+    } catch (err) {
+      console.error("❌ Quiz download failed:", err);
+    }
   }
 
   async function handleTopicDownload(topic) {
     if (!userId) return;
-
-    console.log("⬇️ Downloading topic:", topic);
-
     await cacheTopics([topic], userId);
     loadOfflineData(userId);
   }
 
   async function handleRemoveQuiz(id) {
     if (!userId) return;
-
-    console.log("🗑 Removing quiz:", id);
-
     await deleteCachedQuiz(id, userId);
     loadOfflineData(userId);
   }
-
 
   function openQuiz(id) {
     navigate(`/quiz/${id}`);
   }
 
-  function openTopic(slug) {
-    navigate(`/subjects/topic/${slug}`);
+  function openTopic(topic) {
+
+    const subject = topic.subject_name?.toLowerCase() || "english";
+    const category = topic.slug || "general";
+    const slug = topic.slug;
+
+    navigate(`/subjects/${subject}/${category}/${slug}`);
   }
 
-
-  /* =========================
-     FILTERING
-  ========================= */
+  /* ========================= */
 
   const filterItems = (items) => {
-
-    console.log("🔎 Filtering items:", items);
-
     return items.filter(item => {
 
       const title = (item.topic || item.name || item.slug || "").toLowerCase();
@@ -262,21 +192,10 @@ export default function Offline() {
         (item.subject || "").toLowerCase() === subjectFilter;
 
       return matchesSearch && matchesSubject;
-
     });
-
   };
 
-
-  /* =========================
-     DEBUG STATE
-  ========================= */
-
-  console.log("🎯 STATE");
-  console.log("userId:", userId);
-  console.log("downloadedTopics:", downloadedTopics);
-  console.log("downloadedQuizzes:", downloadedQuizzes);
-
+  /* ========================= */
 
   return (
 
@@ -291,9 +210,7 @@ export default function Offline() {
           </span>
         </div>
 
-
         <section>
-
           <h2>Downloaded Content</h2>
 
           <div className="list-card">
@@ -319,17 +236,14 @@ export default function Offline() {
                 title={t.name || t.slug}
                 description="Downloaded Topic"
                 downloaded
-                onOpen={() => openTopic(t.slug)}
+                onOpen={() => openTopic(t)}
               />
             ))}
 
           </div>
-
         </section>
 
-
         <section>
-
           <h2>Available Quizzes</h2>
 
           <div className="list-card">
@@ -346,12 +260,9 @@ export default function Offline() {
             ))}
 
           </div>
-
         </section>
 
-
         <section>
-
           <h2>Available Topics</h2>
 
           <div className="list-card">
@@ -368,15 +279,11 @@ export default function Offline() {
             ))}
 
           </div>
-
         </section>
 
       </div>
-
     </div>
-
   );
-
 }
 
 
@@ -443,5 +350,4 @@ function OfflineItem({
     </div>
 
   );
-
 }

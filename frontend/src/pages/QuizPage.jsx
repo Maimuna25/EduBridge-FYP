@@ -6,6 +6,7 @@ import "../styles/QuizPage.css";
 import { getCachedQuiz } from "../utils/offlineManager";
 
 export default function QuizPage() {
+
   const { id } = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -15,41 +16,50 @@ export default function QuizPage() {
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAnswers, setShowAnswers] = useState(false); // ⭐ NEW
 
   useEffect(() => {
     fetchQuiz();
-  }, [id, i18n.language]); // 🔥 refetch when language changes
+  }, [id, i18n.language]);
 
   async function fetchQuiz() {
+
     const token = localStorage.getItem("access");
     const lang = i18n.language || "en";
 
-    if (!token) {
-      setError(t("not_logged_in"));
-      setLoading(false);
-      return;
-    }
+    setLoading(true);
+    setError(null);
 
-    try {
-      /* ==========================
-         OFFLINE MODE
-      ========================== */
+    /* ==========================
+       OFFLINE FIRST (PRIORITY)
+    ========================== */
 
-      if (!navigator.onLine) {
-        const cachedQuiz = await getCachedQuiz(Number(id));
+    if (!navigator.onLine) {
 
-        if (!cachedQuiz || !cachedQuiz.questions) {
-          throw new Error(t("quiz_not_downloaded"));
-        }
+      console.log("📴 Offline → loading cached quiz");
 
+      const cachedQuiz = await getCachedQuiz(Number(id));
+
+      console.log("🧠 Cached quiz:", cachedQuiz);
+
+      if (cachedQuiz && cachedQuiz.questions?.length > 0) {
         setQuestions(cachedQuiz.questions);
         setLoading(false);
         return;
       }
 
-      /* ==========================
-         ONLINE MODE
-      ========================== */
+      setError(t("quiz_not_downloaded"));
+      setLoading(false);
+      return;
+    }
+
+    /* ==========================
+       ONLINE
+    ========================== */
+
+    try {
+
+      if (!token) throw new Error(t("not_logged_in"));
 
       const url = `http://127.0.0.1:8000/api/quizzes/${id}/?lang=${lang}`;
 
@@ -59,9 +69,7 @@ export default function QuizPage() {
         },
       });
 
-      if (!res.ok) {
-        throw new Error(t("failed_load_quiz"));
-      }
+      if (!res.ok) throw new Error(t("failed_load_quiz"));
 
       const data = await res.json();
 
@@ -72,26 +80,28 @@ export default function QuizPage() {
       setQuestions(data.questions);
 
     } catch (err) {
-      console.error("Quiz fetch error:", err);
 
-      try {
-        const cachedQuiz = await getCachedQuiz(Number(id));
+      console.error("❌ API failed, trying cache");
 
-        if (cachedQuiz && cachedQuiz.questions) {
-          setQuestions(cachedQuiz.questions);
-          setLoading(false);
-          return;
-        }
+      const cachedQuiz = await getCachedQuiz(Number(id));
 
-      } catch {}
+      if (cachedQuiz && cachedQuiz.questions?.length > 0) {
+        setQuestions(cachedQuiz.questions);
+      } else {
+        setError(err.message);
+      }
 
-      setError(err.message);
     }
 
     setLoading(false);
   }
 
+  /* ==========================
+     ANSWER HANDLING
+  ========================== */
+
   const handleAnswer = (optionKey) => {
+
     const questionId = questions[currentIndex].id;
 
     setSelectedAnswers((prev) => ({
@@ -104,27 +114,39 @@ export default function QuizPage() {
     }
   };
 
+  /* ==========================
+     SUBMIT
+  ========================== */
+
   const handleSubmit = async () => {
+
     const token = localStorage.getItem("access");
 
+    // ⭐ OFFLINE MODE → SHOW ANSWERS INSTEAD
+    if (!navigator.onLine) {
+      console.log("📴 Offline submit → showing answers");
+      setShowAnswers(true);
+      return;
+    }
+
     try {
-      const url = "http://127.0.0.1:8000/api/quizzes/submit/";
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          quiz_id: id,
-          answers: selectedAnswers,
-        }),
-      });
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/quizzes/submit/",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            quiz_id: id,
+            answers: selectedAnswers,
+          }),
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error(t("submit_failed"));
-      }
+      if (!response.ok) throw new Error(t("submit_failed"));
 
       const data = await response.json();
 
@@ -135,10 +157,14 @@ export default function QuizPage() {
         },
       });
 
-    } catch (err) {
+    } catch {
       alert(t("offline_submit_warning"));
     }
   };
+
+  /* ==========================
+     UI STATES
+  ========================== */
 
   if (loading) return <div className="quiz-container">{t("loading_quiz")}</div>;
 
@@ -157,24 +183,35 @@ export default function QuizPage() {
         <h3>{question.question_text}</h3>
 
         <div className="options">
-          {["A", "B", "C", "D"].map((letter) => {
-            const optionText = question[`option_${letter.toLowerCase()}`];
 
+          {["A", "B", "C", "D"].map((letter) => {
+
+            const optionText = question[`option_${letter.toLowerCase()}`];
             if (!optionText) return null;
+
+            const isCorrect = question.correct_answer === letter;
 
             return (
               <button
                 key={letter}
-                className="option-btn"
-                onClick={() => handleAnswer(letter)}
+                className={`option-btn ${
+                  showAnswers
+                    ? isCorrect
+                      ? "correct"
+                      : "wrong"
+                    : ""
+                }`}
+                onClick={() => !showAnswers && handleAnswer(letter)}
               >
                 {optionText}
+                {showAnswers && isCorrect && " ✓"}
               </button>
             );
           })}
+
         </div>
 
-        {currentIndex === questions.length - 1 && (
+        {currentIndex === questions.length - 1 && !showAnswers && (
           <button className="submit-btn" onClick={handleSubmit}>
             {t("submit_quiz")}
           </button>
