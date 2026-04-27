@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import "../styles/NavBar.css"; // make sure the path matches your folder name exactly
+import "../styles/navbar.css"; // make sure the path matches your folder name exactly
 
 export default function NavBar() {
   return (
