@@ -109,7 +109,7 @@ class CreateUserView(APIView):
             username=username,
             email=email,
             password=password,
-            is_active=False
+            is_active=True
         )
 
         # generate code
