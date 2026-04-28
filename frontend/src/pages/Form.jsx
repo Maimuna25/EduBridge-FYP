@@ -39,7 +39,7 @@ export default function Form({ route, method, variant = "card" }) {
         <span className="login-card-subtitle">Sign in to continue learning</span>
 
         <form onSubmit={handleSubmit}>
-          <label className="login-label">Email</label>
+          <label className="login-label">Username</label>
           <input
             className="login-input"
             type="text"
