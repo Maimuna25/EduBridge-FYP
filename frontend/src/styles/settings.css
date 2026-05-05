@@ -5,7 +5,7 @@
 .settings-wrapper {
   min-height:100vh;
 
-  /* 🔥 Bigger base font */
+  /* Bigger base font */
   font-size:calc(19px * var(--font-scale));
 
   padding:calc(3rem * var(--font-scale)) calc(3.5rem * var(--font-scale));
@@ -81,7 +81,6 @@
   margin-bottom:calc(6px * var(--font-scale));
 }
 
-/* 🔥 FIXED PARAGRAPH SIZE */
 .muted {
   font-size:calc(1.15rem * var(--font-scale));
   color:var(--text-secondary);
@@ -275,21 +274,126 @@
    RESPONSIVE
 ============================== */
 
-@media (max-width:768px){
+@media (max-width: 768px) {
 
-  .setting-row{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:calc(18px * var(--font-scale));
+  /* PAGE WRAPPER */
+  .settings-wrapper {
+    padding: 1.5rem 1rem;
+    font-size: calc(16px * var(--font-scale)); /* reduce base size */
   }
 
+  /* HEADER */
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .page-header p {
+    font-size: 0.95rem;
+  }
+
+  /* CARD */
+  .settings-card {
+    padding: 20px 18px;
+    border-radius: 18px;
+  }
+
+  .settings-card h2 {
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+  }
+
+  /* SETTING ROW → STACK */
+  .setting-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px 0;
+  }
+
+  .setting-row h4 {
+    font-size: 1rem;
+  }
+
+  .muted {
+    font-size: 0.85rem;
+  }
+
+  /* OPTION BUTTONS → WRAP NICELY */
+  .option-group {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .option {
+    flex: 1;
+    text-align: center;
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+
+  /* SELECT */
+  .select {
+    width: 100%;
+    font-size: 0.9rem;
+    padding: 10px;
+  }
+
+  /* SWITCH */
+  .switch {
+    transform: scale(0.9);
+  }
+
+  /* ACCOUNT ACTIONS */
   .account-actions {
-    flex-direction:column;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .logout-btn,
   .delete-btn {
-    width:100%;
+    width: 100%;
+    font-size: 0.9rem;
+    padding: 12px;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .page-header h1 {
+    font-size: 1.7rem;
+  }
+
+  .settings-card {
+    padding: 16px 14px;
+  }
+
+  .settings-card h2 {
+    font-size: 1.15rem;
+  }
+
+  .setting-row {
+    padding: 14px 0;
+  }
+
+  .setting-row h4 {
+    font-size: 0.95rem;
+  }
+
+  .muted {
+    font-size: 0.8rem;
+  }
+
+  .option {
+    font-size: 0.8rem;
+    padding: 9px;
+  }
+
+  .logout-btn,
+  .delete-btn {
+    font-size: 0.85rem;
+    padding: 10px;
   }
 
 }

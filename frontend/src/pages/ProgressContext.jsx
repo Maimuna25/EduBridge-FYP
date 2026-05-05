@@ -6,10 +6,13 @@ import React, {
   useCallback
 } from "react";
 
+// Context for managing user learning progress
 const ProgressContext = createContext();
 
+// Context for managing user learning progress
 export function ProgressProvider({ children }) {
-  // ✅ Load from localStorage on first render
+
+  // Provider for global progress state
   const [progress, setProgress] = useState(() => {
     try {
       const saved = localStorage.getItem("eduProgress");
@@ -20,7 +23,7 @@ export function ProgressProvider({ children }) {
     }
   });
 
-  // ✅ Save to localStorage whenever progress changes
+  // Load progress from localStorage on initial render
   useEffect(() => {
     try {
       localStorage.setItem("eduProgress", JSON.stringify(progress));
@@ -29,12 +32,11 @@ export function ProgressProvider({ children }) {
     }
   }, [progress]);
 
-  // ✅ Update topic progress safely
+  // Update topic progress (only increases allowed)
   const updateTopicProgress = useCallback((subject, topic, percent) => {
     setProgress(prev => {
       const currentPercent = prev?.[subject]?.[topic] || 0;
 
-      // Only update if progress increased (prevents slide back reducing %)
       if (percent <= currentPercent) return prev;
 
       return {
@@ -47,12 +49,12 @@ export function ProgressProvider({ children }) {
     });
   }, []);
 
-  // ✅ Get topic progress
+  // Get progress for a specific topic
   const getTopicProgress = useCallback((subject, topic) => {
     return progress?.[subject]?.[topic] || 0;
   }, [progress]);
 
-  // ✅ Calculate subject progress
+  // Calculate overall subject progress
   const getSubjectProgress = useCallback((subject, totalTopics) => {
     const subjectData = progress?.[subject] || {};
     const topicValues = Object.values(subjectData);
@@ -66,7 +68,7 @@ export function ProgressProvider({ children }) {
   return (
     <ProgressContext.Provider
       value={{
-        progress, // 🔥 IMPORTANT — this was missing
+        progress, // Expose full progress state
         updateTopicProgress,
         getTopicProgress,
         getSubjectProgress
@@ -77,6 +79,7 @@ export function ProgressProvider({ children }) {
   );
 }
 
+// Hook to access progress context
 export function useProgress() {
   return useContext(ProgressContext);
 }

@@ -9,7 +9,7 @@ export default function Verify() {
 
   console.log("=== VERIFY PAGE LOADED ===");
 
-  // 🔍 Check navigation state
+  // Check navigation state
   console.log("LOCATION STATE:", location.state);
 
   const email =
@@ -98,7 +98,7 @@ export default function Verify() {
         console.error("⚠️ TOKENS MISSING FROM RESPONSE");
       }
 
-      // ✅ Store tokens
+      // Store tokens
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
 
@@ -120,7 +120,7 @@ export default function Verify() {
     }
   };
 
-  // ✅ Auto-submit when full code entered
+  // Auto-submit when full code entered
   useEffect(() => {
     const fullCode = code.join("");
 
@@ -146,7 +146,7 @@ export default function Verify() {
     }
   };
 
-  // ❗ No email = broken flow
+  // No email = broken flow
   if (!email) {
     console.error("❌ NO EMAIL FOUND → INVALID ACCESS");
 

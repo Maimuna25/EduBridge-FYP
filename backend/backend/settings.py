@@ -11,23 +11,17 @@ import os
 
 load_dotenv()
 
-# --------------------------------------------------
 # BASE DIRECTORY
-# --------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --------------------------------------------------
 # SECURITY
-# --------------------------------------------------
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = ["*"]
 
-# --------------------------------------------------
 # APPLICATIONS
-# --------------------------------------------------
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -47,9 +41,7 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
 ]
 
-# --------------------------------------------------
 # MIDDLEWARE
-# --------------------------------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -63,9 +55,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# --------------------------------------------------
 # URLS / WSGI
-# --------------------------------------------------
 ROOT_URLCONF = 'backend.urls'
 
 TEMPLATES = [
@@ -85,9 +75,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-# --------------------------------------------------
 # DATABASE
-# --------------------------------------------------
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -95,9 +83,7 @@ DATABASES = {
     }
 }
 
-# --------------------------------------------------
 # PASSWORD VALIDATION
-# --------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -113,9 +99,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# --------------------------------------------------
 # INTERNATIONALISATION
-# --------------------------------------------------
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Europe/London'
@@ -123,9 +107,6 @@ TIME_ZONE = 'Europe/London'
 USE_I18N = True
 USE_TZ = True
 
-# --------------------------------------------------
-# STATIC FILES
-# --------------------------------------------------
 # STATIC FILES
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -138,9 +119,7 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --------------------------------------------------
 # DJANGO REST FRAMEWORK
-# --------------------------------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -150,23 +129,17 @@ REST_FRAMEWORK = {
     ],
 }
 
-# --------------------------------------------------
 # JWT SETTINGS
-# --------------------------------------------------
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
-# --------------------------------------------------
 # CORS SETTINGS
-# --------------------------------------------------
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-# --------------------------------------------------
 # EMAIL SETTINGS
-# --------------------------------------------------
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
@@ -175,9 +148,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
-# --------------------------------------------------
 # CRON JOBS
-# --------------------------------------------------
 CRONJOBS = [
     ('* * * * *', 'api.cron.check_and_send_reminders'),
 ]

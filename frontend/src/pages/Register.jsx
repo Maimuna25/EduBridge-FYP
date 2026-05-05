@@ -5,8 +5,8 @@ import "../styles/auth.css";
 function Register() {
   const navigate = useNavigate();
 
+  // After successful register, go to verification page
   const handleSuccess = (data) => {
-    // After successful register → go to verification page
     navigate("/verify", {
       state: { email: data.email }
     });

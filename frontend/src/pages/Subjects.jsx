@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/subjects.css";
 
+// Main Subjects hub component (handles subjects, categories, topics, and progress)
 export default function Subjects() {
 
   const navigate = useNavigate();
   const location = useLocation();
 
+  // STATES
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectedDiscipline, setSelectedDiscipline] = useState(null);
@@ -15,12 +17,12 @@ export default function Subjects() {
   const [topics, setTopics] = useState([]);
   const [progress, setProgress] = useState([]);
 
+  // Auth token + optional subject passed via navigation
   const token = localStorage.getItem("access");
   const incomingSubject = location.state?.subject;
 
-  // ================================
   // FETCH SUBJECTS
-  // ================================
+
   useEffect(() => {
     fetch("http://127.0.0.1:8000/api/subjects/", {
       headers: { Authorization: `Bearer ${token}` }
@@ -30,6 +32,7 @@ export default function Subjects() {
 
         setSubjects(data);
 
+        // If redirected with a subject (e.g., from dashboard), match it
         if (incomingSubject) {
           const match = data.find(
             s => s.name.toLowerCase().includes(incomingSubject.toLowerCase())
@@ -40,15 +43,14 @@ export default function Subjects() {
           }
         }
 
+        // Default to first subject
         if (data.length > 0) {
           setSelectedSubject(data[0]);
         }
       });
   }, []);
 
-  // ================================
   // FETCH CATEGORIES
-  // ================================
   useEffect(() => {
     if (!selectedSubject) return;
 
@@ -58,11 +60,12 @@ export default function Subjects() {
       .then(res => res.json())
       .then(data => {
 
+        // Filter categories by selected subject
         let filtered = data.filter(
           cat => cat.subject === selectedSubject.id
         );
 
-        // ✅ Discipline filtering
+        // Additional filtering for science disciplines
         if (selectedSubject.slug === "science" && selectedDiscipline) {
           filtered = filtered.filter(cat =>
             cat.discipline?.toLowerCase() === selectedDiscipline
@@ -74,9 +77,7 @@ export default function Subjects() {
 
   }, [selectedSubject, selectedDiscipline]);
 
-  // ================================
   // FETCH TOPICS
-  // ================================
   useEffect(() => {
     fetch("http://127.0.0.1:8000/api/topics/", {
       headers: { Authorization: `Bearer ${token}` }
@@ -85,9 +86,7 @@ export default function Subjects() {
       .then(data => setTopics(data));
   }, []);
 
-  // ================================
   // FETCH PROGRESS
-  // ================================
   useEffect(() => {
     fetch("http://127.0.0.1:8000/api/progress/", {
       headers: { Authorization: `Bearer ${token}` }
@@ -96,50 +95,50 @@ export default function Subjects() {
       .then(data => setProgress(data));
   }, []);
 
-  // ================================
-  // CATEGORY PROGRESS (FIXED)
-  // ================================
+  // CATEGORY PROGRESS CALCULATION
   const getCategoryProgress = (categoryId) => {
 
+    // Get topics belonging to this category
     const categoryTopics = topics.filter(
       t => t.category === categoryId
     );
 
     if (categoryTopics.length === 0) return 0;
 
+     // Extract topic identifiers (slugs)
     const topicSlugs = categoryTopics.map(t => t.slug);
 
+    // Match user progress for those topics
     const topicProgress = progress.filter(p =>
-        topicSlugs.includes(p.topic)   // ✅ matches backend
+        topicSlugs.includes(p.topic)
     );
 
+    // Sum progress values
     const total = topicProgress.reduce(
-        (sum, p) => sum + p.progress,  // ✅ matches backend
+        (sum, p) => sum + p.progress,
         0
     );
 
     return Math.round(total / categoryTopics.length);
   };
 
-  // ================================
   // SUBJECT / DISCIPLINE PROGRESS
-  // ================================
   const getSubjectProgress = () => {
 
     if (categories.length === 0) return 0;
 
+    // Get progress for each category
     const values = categories.map(cat =>
       getCategoryProgress(cat.id)
     );
 
+    // Average across categories
     const total = values.reduce((sum, v) => sum + v, 0);
 
     return Math.round(total / categories.length);
   };
 
-  // ================================
   // PROGRESS TITLE
-  // ================================
   const format = (text) =>
     text.charAt(0).toUpperCase() + text.slice(1);
 
@@ -150,6 +149,7 @@ export default function Subjects() {
     return `${selectedSubject.name} Progress`;
   };
 
+  // Prevent rendering before subject is ready
   if (!selectedSubject) return null;
 
   const subjectProgress = getSubjectProgress();

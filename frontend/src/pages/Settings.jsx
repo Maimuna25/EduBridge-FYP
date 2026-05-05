@@ -2,8 +2,10 @@ import { useContext, useEffect, useState } from "react";
 import "../styles/settings.css";
 import { SettingsContext } from "../context/SettingsContext";
 
+// Main Settings page component
 export default function Settings() {
 
+  // Pull global settings state from context
   const {
     theme,
     setTheme,
@@ -13,11 +15,13 @@ export default function Settings() {
     setNotifications
   } = useContext(SettingsContext);
 
+  // Local state for reminder time (persisted in localStorage)
   const [reminderTime, setReminderTime] = useState(
     localStorage.getItem("reminderTime") || ""
   );
 
   // ===== API CALL (REMINDER) =====
+  // Sends reminder preferences to backend
   const saveReminderToBackend = async (time, enabled) => {
     try {
       const token = localStorage.getItem("access");

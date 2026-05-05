@@ -223,7 +223,7 @@ TEXT
 }
 
 .quiz-info h3 {
-  color: var(--text-main); /* 🔥 FIXED */
+  color: var(--text-main);
 }
 
 .quiz-meta {
@@ -337,4 +337,145 @@ RECOMMENDED CARD
 
   font-weight:700;
   cursor:pointer;
+}
+
+@media (max-width: 768px) {
+
+  /* PAGE WRAPPER */
+  .quizzes-page-wrapper {
+    padding: 1.5rem 1rem;
+  }
+
+  /* HEADER */
+  .quizzes-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .quizzes-chip {
+    font-size: 0.75rem;
+    padding: 5px 10px;
+  }
+
+  /* FILTERS → STACK */
+  .quiz-filters {
+    flex-direction: column;
+    gap: 10px;
+    margin: 25px 0 30px 0;
+  }
+
+  .quiz-filters select {
+    width: 100%;
+    font-size: 0.9rem;
+  }
+
+  /* STATS → 1 COLUMN */
+  .quiz-stats {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 35px;
+  }
+
+  .stat-card {
+    padding: 18px;
+  }
+
+  .stat-card strong {
+    font-size: 1.6rem;
+  }
+
+  /* QUIZ SLIDER → MOBILE FRIENDLY */
+  .quiz-slider {
+    gap: 16px;
+    padding-bottom: 10px;
+    scroll-snap-type: x mandatory;
+  }
+
+  /* FIX CARD WIDTH (IMPORTANT) */
+  .quiz-card {
+    min-width: 85%;
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  /* TEXT */
+  .quiz-info h3 {
+    font-size: 1rem;
+  }
+
+  .quiz-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .quiz-meta button {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  /* RECOMMENDED SECTION */
+  .recommended-box {
+    margin-top: 40px;
+  }
+
+  .recommended-box h3 {
+    font-size: 1.2rem;
+  }
+
+  /* STACK CARD */
+  .recommended-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .recommended-card h4 {
+    font-size: 1.2rem;
+  }
+
+  .recommended-card p {
+    font-size: 0.9rem;
+  }
+
+  .recommended-card button {
+    width: 100%;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .quizzes-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .quiz-filters select {
+    font-size: 0.85rem;
+    padding: 10px 14px;
+  }
+
+  .stat-card strong {
+    font-size: 1.4rem;
+  }
+
+  .quiz-card {
+    min-width: 90%;
+    padding: 16px;
+  }
+
+  .quiz-info h3 {
+    font-size: 0.95rem;
+  }
+
+  .quiz-meta button {
+    font-size: 0.85rem;
+  }
+
+  .recommended-card h4 {
+    font-size: 1.1rem;
+  }
+
+  .recommended-card p {
+    font-size: 0.85rem;
+  }
 }

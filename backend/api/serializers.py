@@ -19,10 +19,8 @@ from .models import (
     UserAnswer,
 )
 
-# ========================================
-# User
-# ========================================
-
+# User Serializer
+# Handles registration + ser data
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -31,14 +29,12 @@ class UserSerializer(serializers.ModelSerializer):
             "password": {"write_only": True}
         }
 
+    # Create secure hashed user
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
 
 
-# ========================================
-# Notes
-# ========================================
-
+# Notes Serializer
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
@@ -48,10 +44,8 @@ class NoteSerializer(serializers.ModelSerializer):
         }
 
 
-# ========================================
-# Explain Feature
-# ========================================
-
+# Explain Feature Serializer
+# Prompt shown to user
 class ExplainPromptSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExplainPrompt
@@ -65,7 +59,7 @@ class ExplainPromptSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
-
+# Stores user answer + AI feedback
 class ExplainAttemptSerializer(serializers.ModelSerializer):
     prompt = ExplainPromptSerializer(read_only=True)
     prompt_id = serializers.IntegerField(write_only=True)
@@ -103,10 +97,8 @@ class ExplainAttemptSerializer(serializers.ModelSerializer):
         )
 
 
-# ========================================
 # Chat System
-# ========================================
-
+# Individual messages
 class ChatMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatMessage
@@ -119,7 +111,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["created_at"]
 
-
+# Chat session with nested messages
 class ChatSessionSerializer(serializers.ModelSerializer):
     messages = ChatMessageSerializer(many=True, read_only=True)
 
@@ -144,10 +136,7 @@ class ChatSessionSerializer(serializers.ModelSerializer):
         ]
 
 
-# ========================================
-# Learning Analytics
-# ========================================
-
+# Learning Analytics Serializer
 class LearningAnalyticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = LearningAnalytics
@@ -165,10 +154,8 @@ class LearningAnalyticsSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-# ========================================
-# QUIZ SYSTEM
-# ========================================
-
+# Quiz System
+# Quiz questions
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
@@ -179,13 +166,15 @@ class QuestionSerializer(serializers.ModelSerializer):
             "option_b",
             "option_c",
             "option_d",
-            "correct_option",   # needed for grading/admin
+            "correct_option",
         ]
+
+        # Hide answer from normal frontend users
         extra_kwargs = {
             "correct_option": {"write_only": True}
         }
 
-
+# Quiz with nested questions
 class QuizSerializer(serializers.ModelSerializer):
 
     questions = QuestionSerializer(many=True, read_only=True)
@@ -201,7 +190,7 @@ class QuizSerializer(serializers.ModelSerializer):
             "questions",
         ]
 
-
+# Stores selected answers
 class UserAnswerSerializer(serializers.ModelSerializer):
 
     question = QuestionSerializer(read_only=True)
@@ -230,7 +219,7 @@ class UserAnswerSerializer(serializers.ModelSerializer):
             **validated_data
         )
 
-
+# Full quiz attempt
 class UserQuizAttemptSerializer(serializers.ModelSerializer):
 
     quiz = QuizSerializer(read_only=True)
@@ -269,27 +258,23 @@ class UserQuizAttemptSerializer(serializers.ModelSerializer):
         )
 
 
-# ========================================
-# SUBJECT / CATEGORY / TOPIC / SLIDE
-# ========================================
-
+# Subject / Category / Topic / Slide
+# Individual learning slides
 class SlideSerializer(serializers.ModelSerializer):
     class Meta:
         model = Slide
         fields = ["id", "content", "order", "topic"]
 
-
+# Individual learning slides
 class TopicSerializer(serializers.ModelSerializer):
-    # 🔥 Keep category (needed for frontend filtering)
+
     category = serializers.IntegerField(source="category.id", read_only=True)
 
-    # 🔥 Keep subject (clean name for UI)
     subject = serializers.CharField(
         source="category.subject.name",
         read_only=True
     )
 
-    # 🔥 Keep slides (for topic detail pages)
     slides = SlideSerializer(many=True, read_only=True)
 
     class Meta:
@@ -298,12 +283,12 @@ class TopicSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "slug",
-            "category",   # ✅ REQUIRED (fixes your bug)
-            "subject",    # ✅ clean subject name
-            "slides"      # ✅ optional but useful
+            "category",
+            "subject",
+            "slides"
         ]
 
-
+# Category with topics
 class CategorySerializer(serializers.ModelSerializer):
     topics = TopicSerializer(many=True, read_only=True)
 
@@ -314,12 +299,12 @@ class CategorySerializer(serializers.ModelSerializer):
             "name",
             "slug",
             "subject",
-            "level",        # ✅ ADD THIS
-            "discipline",   # ✅ ADD THIS (VERY IMPORTANT)
+            "level",
+            "discipline",
             "topics",
         ]
 
-
+# Subject with categories
 class SubjectSerializer(serializers.ModelSerializer):
     categories = CategorySerializer(many=True, read_only=True)
 
@@ -328,10 +313,7 @@ class SubjectSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "slug", "categories"]
 
 
-# ========================================
-# PROGRESS SYSTEM
-# ========================================
-
+# Progress Tracking
 class TopicProgressSerializer(serializers.ModelSerializer):
 
     topic_name = serializers.CharField(source="topic.name", read_only=True)

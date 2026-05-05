@@ -1,8 +1,9 @@
+
 from django.utils import timezone
 from .models import UserSettings
 from .utils import send_study_reminder_email
 
-
+# This function is intended checks which users should receive reminder emails
 def check_and_send_reminders():
     try:
         print("\n========== 🚀 CRON START ==========")
@@ -12,6 +13,7 @@ def check_and_send_reminders():
         print(f"🌍 DJANGO TIME: {now}")
         print(f"⏰ NOW: {now.hour}:{now.minute}")
 
+        # Get all users who enabled notifications and selected a reminder time
         settings = UserSettings.objects.filter(
             notifications_enabled=True,
             reminder_time__isnull=False
@@ -36,14 +38,12 @@ def check_and_send_reminders():
 
                 reminder_time = setting.reminder_time
 
-                print(f"🧠 COMPARISON:")
+                print("🧠 COMPARISON:")
                 print(f"   → NOW TIME: {now.time()}")
                 print(f"   → REMINDER TIME: {reminder_time}")
 
-                # ✅ Check if reminder time has passed
                 time_condition = reminder_time <= now.time()
 
-                # ✅ Check if already sent for this specific reminder time
                 already_sent_for_this_time = (
                     setting.last_sent_reminder_time == reminder_time
                 )
@@ -57,29 +57,30 @@ def check_and_send_reminders():
                         print(f"⚠️ No email for {user.username} — SKIPPING")
                         continue
 
-                    print(f"📧 SENDING ONE-TIME REMINDER TO: {user.email}")
+                    print(f"SENDING ONE-TIME REMINDER TO: {user.email}")
 
                     try:
                         send_study_reminder_email(user)
                         print("✅ EMAIL SENT SUCCESSFULLY")
 
                     except Exception as email_error:
-                        print(f"❌ EMAIL SEND FAILED: {email_error}")
+                        print(f"EMAIL SEND FAILED: {email_error}")
                         continue
 
-                    # ✅ Mark this reminder time as used
                     setting.last_sent_reminder_time = reminder_time
                     setting.save()
 
-                    print("✅ DATABASE UPDATED (marked as sent for this time)")
+                    print("DATABASE UPDATED (marked as sent for this time)")
 
                 else:
-                    print("⛔ CONDITION NOT MET — skipping user")
+                    print(" CONDITION NOT MET — skipping user")
+
 
             except Exception as inner_error:
-                print(f"❌ USER ERROR: {inner_error}")
+                print(f" USER ERROR: {inner_error}")
 
-        print("========== ✅ CRON END ==========\n")
+        print("========== CRON END ==========\n")
 
+    # Catch overall cron errors
     except Exception as e:
         print(f"🔥 CRON ERROR: {e}")

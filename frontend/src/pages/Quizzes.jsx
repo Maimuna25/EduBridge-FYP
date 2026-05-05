@@ -3,24 +3,26 @@ import { useNavigate } from "react-router-dom";
 import "../styles/quizzes.css";
 import { cacheQuizzes, getCachedQuizzes } from "../utils/offlineManager";
 
+// Quizzes page with filtering, stats, and offline support
 export default function Quizzes() {
 
+  // Quizzes page with filtering, stats, and offline support
   const [quizzes, setQuizzes] = useState([]);
   const [history, setHistory] = useState([]);
-
   const [subjectFilter, setSubjectFilter] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("");
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const token = localStorage.getItem("access");
   const navigate = useNavigate();
 
+  // Fetch data when filters change
   useEffect(() => {
     fetchAll();
   }, [subjectFilter, difficultyFilter]);
 
+  // Build API URL with filters
   function buildQuizURL() {
     let url = "http://127.0.0.1:8000/api/quizzes/";
     const params = [];
@@ -40,6 +42,7 @@ export default function Quizzes() {
     return url;
   }
 
+  // Safe fetch wrapper with error handling
   async function safeFetch(url) {
     try {
       const res = await fetch(url, {
@@ -62,6 +65,7 @@ export default function Quizzes() {
     }
   }
 
+   // Fetch quizzes and history (with offline fallback)
   async function fetchAll() {
     setLoading(true);
     setError(null);
@@ -72,6 +76,7 @@ export default function Quizzes() {
     let quizData = [];
     let historyData = [];
 
+    // Fetch quizzes or fallback to cache
     try {
       quizData = await safeFetch(quizURL);
     } catch {
@@ -102,7 +107,6 @@ export default function Quizzes() {
     setLoading(false);
   }
 
-  // ================= FIXED LOGIC =================
 
   // Get latest attempt per quiz
   const latestAttempts = Object.values(
@@ -135,14 +139,13 @@ export default function Quizzes() {
       })
     : null;
 
+  // Recommend quiz based on weakest performance
   const recommendedQuiz = lowestAttempt
     ? quizzes.find((q) => q.id === lowestAttempt.quiz_id)
     : null;
 
-  // ================= STATS =================
-
+   // Calculate stats
   const uniqueCompleted = new Set(history.map((h) => h.quiz_id)).size;
-
   const completedCount = uniqueCompleted;
 
   const averageScore =
@@ -160,8 +163,6 @@ export default function Quizzes() {
       ? quizzes.length - completedCount
       : 0;
 
-  // ================= UI =================
-
   if (loading) {
     return <div className="quizzes-page">Loading quizzes...</div>;
   }
@@ -175,6 +176,7 @@ export default function Quizzes() {
       <div className="quizzes-page">
         <div className="quizzes-container">
 
+          {/* Page header */}
           <div className="quizzes-header">
             <h1>Quizzes</h1>
             <span className="quizzes-chip">
@@ -182,6 +184,7 @@ export default function Quizzes() {
             </span>
           </div>
 
+          {/* Filters */}
           <div className="quiz-filters">
             <select
               value={subjectFilter}
@@ -204,12 +207,14 @@ export default function Quizzes() {
             </select>
           </div>
 
+          {/* Stats section */}
           <div className="quiz-stats">
             <StatCard title="Quizzes Completed" value={completedCount} />
             <StatCard title="Average Score" value={`${averageScore}%`} />
             <StatCard title="Quizzes Remaining" value={remainingCount} />
           </div>
 
+           {/* Quiz list */}
           <div className="quiz-slider">
             {quizzes.map((quiz) => {
 
@@ -237,6 +242,7 @@ export default function Quizzes() {
             })}
           </div>
 
+          {/* Recommended quiz */}
           {recommendedQuiz && (
             <div className="recommended-box">
               <h3>Recommended Next</h3>
@@ -266,6 +272,7 @@ export default function Quizzes() {
 
 /* COMPONENTS */
 
+ // Simple stat display card
 function StatCard({ title, value }) {
   return (
     <div className="stat-card">
@@ -275,10 +282,12 @@ function StatCard({ title, value }) {
   );
 }
 
+// Individual quiz card with navigation
 function QuizCard({ quizId, title, subject, difficulty, status, score }) {
 
   const navigate = useNavigate();
 
+  // Navigate to quiz page
   function handleStart() {
     navigate(`/quiz/${quizId}`);
   }

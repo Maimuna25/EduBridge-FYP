@@ -4,21 +4,21 @@ import "../styles/TopicSummary.css";
 
 import { getCachedTopics } from "../utils/offlineManager";
 
+// Component for displaying topic slides with offline support + progress tracking
 export default function TopicSummary() {
 
+  // Get topic slug from URL + navigation helper
   const { topicSlug } = useParams();
   const navigate = useNavigate();
 
   const [slides, setSlides] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState(null);
+  const [userId, setUserId] = useState(0);
 
   const token = localStorage.getItem("access");
 
-  // ==========================
   // GET USER (IMPORTANT FOR CACHE)
-  // ==========================
   useEffect(() => {
     const stored = localStorage.getItem("current_user");
 
@@ -32,9 +32,7 @@ export default function TopicSummary() {
     }
   }, []);
 
-  // ==========================
   // MARK PROGRESS
-  // ==========================
   const markSlideComplete = (slideIndex) => {
 
     if (!slides.length || !navigator.onLine) return;
@@ -52,9 +50,7 @@ export default function TopicSummary() {
     }).catch(() => {});
   };
 
-  // ==========================
-  // LOAD TOPIC (FIXED)
-  // ==========================
+  // LOAD TOPIC
   useEffect(() => {
 
     if (!topicSlug || userId === null) return;
@@ -65,9 +61,7 @@ export default function TopicSummary() {
 
       setLoading(true);
 
-      // ==========================
-      // 📴 OFFLINE FIRST
-      // ==========================
+      // OFFLINE FIRST
       if (!navigator.onLine) {
 
         console.log("📴 Offline mode");
@@ -95,9 +89,7 @@ export default function TopicSummary() {
         console.warn("❌ Topic not found in cache or missing slides");
       }
 
-      // ==========================
-      // 🌐 ONLINE
-      // ==========================
+      // ONLINE
       try {
 
         console.log("🌐 Fetching from API");
@@ -156,18 +148,14 @@ export default function TopicSummary() {
 
   }, [topicSlug, token, userId]);
 
-  // ==========================
   // TRACK PROGRESS
-  // ==========================
   useEffect(() => {
     if (slides.length > 0) {
       markSlideComplete(currentSlide);
     }
   }, [currentSlide, slides]);
 
-  // ==========================
   // NAVIGATION
-  // ==========================
   const handleNext = () => {
     if (currentSlide < slides.length - 1) {
       setCurrentSlide(prev => prev + 1);
@@ -192,9 +180,7 @@ export default function TopicSummary() {
     });
   };
 
-  // ==========================
   // UI
-  // ==========================
   return (
 
     <div className="topic-summary-wrapper">

@@ -2,11 +2,15 @@ import { useState } from "react";
 import api from "../api";
 import "../styles/forgot-password.css";
 
+// Password reset request page
 export default function ForgotPassword() {
+
+  // Form state
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Submit email to request reset link
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -26,15 +30,20 @@ export default function ForgotPassword() {
     <div className="forgot-password-page">
       <div className="forgot-password-wrapper">
         <div className="forgot-password-card">
+
+          {/* Page title */}
           <h2 className="forgot-password-title">Reset Password</h2>
 
+          {/* Instruction text */}
           <p className="forgot-password-subtitle">
             Enter your email to receive a reset link
           </p>
 
+          {/* Reset form */}
           <form onSubmit={handleSubmit}>
             <label className="forgot-password-label">Email</label>
 
+            {/* Email input */}
             <input
               className="forgot-password-input"
               type="email"
@@ -44,6 +53,7 @@ export default function ForgotPassword() {
               required
             />
 
+            {/* Submit button */}
             <button
               className="forgot-password-button"
               type="submit"
@@ -52,6 +62,7 @@ export default function ForgotPassword() {
               {loading ? "Sending..." : "Send Reset Link"}
             </button>
 
+            {/* Feedback message */}
             {message && (
               <p className="forgot-password-message">
                 {message}
@@ -59,6 +70,7 @@ export default function ForgotPassword() {
             )}
           </form>
 
+          {/* Back to login link */}
           <p className="forgot-password-footer">
             Remembered your password?{" "}
             <a href="/login">Sign in</a>

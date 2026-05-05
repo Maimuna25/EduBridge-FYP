@@ -1,46 +1,38 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import "../styles/QuizPage.css";
 
 import { getCachedQuiz } from "../utils/offlineManager";
 
+// Quiz page with offline support
 export default function QuizPage() {
 
   const { id } = useParams();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
 
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showAnswers, setShowAnswers] = useState(false); // ⭐ NEW
+  const [showAnswers, setShowAnswers] = useState(false);
 
   useEffect(() => {
     fetchQuiz();
-  }, [id, i18n.language]);
+  }, [id]);
 
   async function fetchQuiz() {
 
     const token = localStorage.getItem("access");
-    const lang = i18n.language || "en";
 
     setLoading(true);
     setError(null);
 
-    /* ==========================
-       OFFLINE FIRST (PRIORITY)
-    ========================== */
+    /* Offline First (Priority) */
 
     if (!navigator.onLine) {
 
-      console.log("📴 Offline → loading cached quiz");
-
       const cachedQuiz = await getCachedQuiz(Number(id));
-
-      console.log("🧠 Cached quiz:", cachedQuiz);
 
       if (cachedQuiz && cachedQuiz.questions?.length > 0) {
         setQuestions(cachedQuiz.questions);
@@ -48,20 +40,18 @@ export default function QuizPage() {
         return;
       }
 
-      setError(t("quiz_not_downloaded"));
+      setError("This quiz is not available offline.");
       setLoading(false);
       return;
     }
 
-    /* ==========================
-       ONLINE
-    ========================== */
+    /* Online */
 
     try {
 
-      if (!token) throw new Error(t("not_logged_in"));
+      if (!token) throw new Error("You are not logged in.");
 
-      const url = `http://127.0.0.1:8000/api/quizzes/${id}/?lang=${lang}`;
+      const url = `http://127.0.0.1:8000/api/quizzes/${id}/`;
 
       const res = await fetch(url, {
         headers: {
@@ -69,19 +59,17 @@ export default function QuizPage() {
         },
       });
 
-      if (!res.ok) throw new Error(t("failed_load_quiz"));
+      if (!res.ok) throw new Error("Failed to load quiz.");
 
       const data = await res.json();
 
       if (!data.questions || data.questions.length === 0) {
-        throw new Error(t("no_questions"));
+        throw new Error("No questions found.");
       }
 
       setQuestions(data.questions);
 
     } catch (err) {
-
-      console.error("❌ API failed, trying cache");
 
       const cachedQuiz = await getCachedQuiz(Number(id));
 
@@ -96,9 +84,7 @@ export default function QuizPage() {
     setLoading(false);
   }
 
-  /* ==========================
-     ANSWER HANDLING
-  ========================== */
+  /* Answer Handling */
 
   const handleAnswer = (optionKey) => {
 
@@ -114,17 +100,14 @@ export default function QuizPage() {
     }
   };
 
-  /* ==========================
-     SUBMIT
-  ========================== */
+  /* Submit */
 
   const handleSubmit = async () => {
 
     const token = localStorage.getItem("access");
 
-    // ⭐ OFFLINE MODE → SHOW ANSWERS INSTEAD
+    // Offline mode → show correct answers
     if (!navigator.onLine) {
-      console.log("📴 Offline submit → showing answers");
       setShowAnswers(true);
       return;
     }
@@ -146,7 +129,7 @@ export default function QuizPage() {
         }
       );
 
-      if (!response.ok) throw new Error(t("submit_failed"));
+      if (!response.ok) throw new Error("Failed to submit quiz.");
 
       const data = await response.json();
 
@@ -158,15 +141,13 @@ export default function QuizPage() {
       });
 
     } catch {
-      alert(t("offline_submit_warning"));
+      alert("Submission failed. Please try again.");
     }
   };
 
-  /* ==========================
-     UI STATES
-  ========================== */
+  /* UI States */
 
-  if (loading) return <div className="quiz-container">{t("loading_quiz")}</div>;
+  if (loading) return <div className="quiz-container">Loading quiz...</div>;
 
   if (error) return <div className="quiz-container error">{error}</div>;
 
@@ -177,7 +158,7 @@ export default function QuizPage() {
       <div className="quiz-card">
 
         <h2>
-          {t("question")} {currentIndex + 1} {t("of")} {questions.length}
+          Question {currentIndex + 1} of {questions.length}
         </h2>
 
         <h3>{question.question_text}</h3>
@@ -213,7 +194,7 @@ export default function QuizPage() {
 
         {currentIndex === questions.length - 1 && !showAnswers && (
           <button className="submit-btn" onClick={handleSubmit}>
-            {t("submit_quiz")}
+            Submit Quiz
           </button>
         )}
 

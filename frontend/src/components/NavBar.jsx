@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
-import "../styles/navbar.css"; // make sure the path matches your folder name exactly
+import "../styles/navbar.css";
 
+// Sidebar navigation component for main app sections
 export default function NavBar() {
   return (
     <aside className="sidebar">
@@ -9,6 +10,7 @@ export default function NavBar() {
         <p>University Learning Platform</p>
       </div>
 
+      {/* Navigation links */}
       <nav className="sidebar-nav">
         <NavLink to="/dashboard">Dashboard</NavLink>
         <NavLink to="/subjects">Subjects</NavLink>

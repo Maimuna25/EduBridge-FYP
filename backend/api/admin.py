@@ -1,6 +1,8 @@
+
+# This file registers models so they can be managed through the Django admin panel
 from django.contrib import admin
+
 from .models import (
-    # Existing
     Note,
     ExplainPrompt,
     ExplainAttempt,
@@ -15,35 +17,37 @@ from .models import (
     Category,
     Topic,
     Slide,
-    TopicProgress, UserSettings,
+    TopicProgress,
+    UserSettings,
 )
 
-# ========================================
-# LEARNING STRUCTURE (NEW)
-# ========================================
-
+# Allows Slides to be edited inside Topic admin page
 class SlideInline(admin.TabularInline):
     model = Slide
-    extra = 1
+    extra = 1  # show one empty extra row
 
 
+# Allows Topics to be edited inside Category admin page
 class TopicInline(admin.TabularInline):
     model = Topic
     extra = 1
 
 
+# Allows Categories to be edited inside Subject admin page
 class CategoryInline(admin.TabularInline):
     model = Category
     extra = 1
 
 
+# Subject admin page
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "slug")
-    prepopulated_fields = {"slug": ("name",)}
+    list_display = ("id", "name", "slug")  # columns shown
+    prepopulated_fields = {"slug": ("name",)}  # auto-generate slug
     inlines = [CategoryInline]
 
 
+# Category admin page
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "subject", "slug")
@@ -52,6 +56,7 @@ class CategoryAdmin(admin.ModelAdmin):
     inlines = [TopicInline]
 
 
+# Topic admin page
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "category", "slug")
@@ -60,16 +65,13 @@ class TopicAdmin(admin.ModelAdmin):
     inlines = [SlideInline]
 
 
+# Slide admin page
 @admin.register(Slide)
 class SlideAdmin(admin.ModelAdmin):
     list_display = ("id", "topic", "order")
     list_filter = ("topic",)
     ordering = ("topic", "order")
 
-
-# ========================================
-# NOTES
-# ========================================
 
 @admin.register(Note)
 class NoteAdmin(admin.ModelAdmin):
@@ -78,10 +80,7 @@ class NoteAdmin(admin.ModelAdmin):
     list_filter = ("created_at",)
 
 
-# ========================================
-# Explain Feature
-# ========================================
-
+# Prompt questions shown to users
 @admin.register(ExplainPrompt)
 class ExplainPromptAdmin(admin.ModelAdmin):
     list_display = ("id", "subject", "topic", "difficulty", "created_at")
@@ -89,6 +88,7 @@ class ExplainPromptAdmin(admin.ModelAdmin):
     list_filter = ("subject", "difficulty", "created_at")
 
 
+# User attempts and AI feedback
 @admin.register(ExplainAttempt)
 class ExplainAttemptAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "prompt", "score", "created_at")
@@ -102,10 +102,7 @@ class ExplainAttemptAdmin(admin.ModelAdmin):
     list_filter = ("prompt__subject", "prompt__difficulty", "created_at")
 
 
-# ========================================
-# Chat System
-# ========================================
-
+# Chat sessions
 @admin.register(ChatSession)
 class ChatSessionAdmin(admin.ModelAdmin):
     list_display = ("user", "subject", "topic", "message_count", "created_at")
@@ -113,6 +110,7 @@ class ChatSessionAdmin(admin.ModelAdmin):
     list_filter = ("subject",)
 
 
+# Individual chat messages
 @admin.register(ChatMessage)
 class ChatMessageAdmin(admin.ModelAdmin):
     list_display = ("id", "session", "role", "created_at")
@@ -120,19 +118,19 @@ class ChatMessageAdmin(admin.ModelAdmin):
     search_fields = ("content",)
 
 
-# ========================================
-# QUIZ SYSTEM
-# ========================================
+# Allows questions inside quiz page
 class QuestionInline(admin.TabularInline):
     model = Question
     extra = 1
 
 
+# Question admin
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ("id", "quiz", "question_text")
 
 
+# Quiz admin
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
     list_display = ("id", "subject", "topic", "difficulty", "created_at")
@@ -141,6 +139,7 @@ class QuizAdmin(admin.ModelAdmin):
     inlines = [QuestionInline]
 
 
+# Allows answers inside attempt page
 class UserAnswerInline(admin.TabularInline):
     model = UserAnswer
     extra = 0
@@ -148,6 +147,7 @@ class UserAnswerInline(admin.TabularInline):
     can_delete = False
 
 
+# User quiz attempts
 @admin.register(UserQuizAttempt)
 class UserQuizAttemptAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "quiz", "score", "total_questions", "completed_at")
@@ -156,20 +156,34 @@ class UserQuizAttemptAdmin(admin.ModelAdmin):
     inlines = [UserAnswerInline]
 
 
+# Individual user answers
 @admin.register(UserAnswer)
 class UserAnswerAdmin(admin.ModelAdmin):
     list_display = ("id", "attempt", "question", "selected_option", "is_correct")
 
+
+
+# Topic progress percentages
 @admin.register(TopicProgress)
 class TopicProgressAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "topic", "slides_completed", "progress_percent","updated_at")
+    list_display = (
+        "id",
+        "user",
+        "topic",
+        "slides_completed",
+        "progress_percent",
+        "updated_at",
+    )
     search_fields = ("user__username",)
 
+
+# Completed slides
 @admin.register(SlideCompletion)
 class SlideCompletionAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "slide", "completed_at")
     search_fields = ("user__username", "slide__topic__name")
     list_filter = ("completed_at",)
+
 
 @admin.register(UserSettings)
 class UserSettingsAdmin(admin.ModelAdmin):

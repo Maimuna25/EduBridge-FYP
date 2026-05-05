@@ -225,9 +225,7 @@
 }
 
 
-/* ============================= */
-/* 🔥 SCIENCE SELECTION (UPGRADED) */
-/* ============================= */
+/*  SCIENCE SELECTION  */
 
 .science-selection-wrapper {
   margin-top: 100px;
@@ -251,7 +249,7 @@
 }
 
 
-/* 🔥 BIG PREMIUM CARDS */
+/* BIG PREMIUM CARDS */
 .science-card {
   width: 100%;
   height: 220px;
@@ -361,3 +359,121 @@
   opacity: 1;
   transform: translateX(-2px);
 }
+
+@media (max-width: 768px) {
+
+  .subjects-page {
+    padding: 1.5rem 1rem;
+  }
+
+  .subject-title {
+    font-size: 1.8rem;
+  }
+
+  .subject-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 25px;
+  }
+
+  /* Tabs scroll horizontally */
+  .subject-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding-bottom: 5px;
+  }
+
+  .tab-btn {
+    white-space: nowrap;
+    font-size: 0.85rem;
+    padding: 8px 16px;
+  }
+
+  /* Progress card tighter */
+  .main-progress-card {
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+
+  .main-progress-card h2 {
+    font-size: 1rem;
+  }
+
+  /* Grid becomes single column */
+  .topics-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .topic-card {
+    padding: 20px;
+    min-height: auto;
+  }
+
+  /* Science cards stack nicely */
+  .science-selection-wrapper {
+    margin-top: 40px;
+    padding: 0;
+  }
+
+  .science-title {
+    font-size: 20px;
+  }
+
+  .science-selection {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .science-card {
+    height: 160px;
+    font-size: 18px;
+  }
+
+  /* Buttons */
+  .continue-btn {
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+
+  .back-btn {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .subject-title {
+    font-size: 1.5rem;
+  }
+
+  .subject-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .main-progress-bar {
+    height: 10px;
+  }
+
+  .progress-percentage {
+    font-size: 0.8rem;
+  }
+
+  .topic-card h3 {
+    font-size: 1rem;
+  }
+
+  .topic-progress-text {
+    font-size: 0.75rem;
+  }
+
+  .science-card {
+    height: 140px;
+    font-size: 16px;
+  }
+
+  .science-card .icon {
+    font-size: 28px;
+  }
+}
+

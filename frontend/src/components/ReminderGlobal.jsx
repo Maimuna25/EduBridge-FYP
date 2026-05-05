@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import "../styles/reminder.css";
 
+// Global study reminder popup based on saved time
 export default function ReminderGlobal() {
 
+  // Popup visibility state
   const [showPopup, setShowPopup] = useState(false);
 
+  // User settings from localStorage
   const notifications = localStorage.getItem("notifications") === "true";
   const reminderTime = localStorage.getItem("reminderTime") || "19:00";
 
+  // Check current time against reminder time
   useEffect(() => {
 
     if (!notifications) return;
@@ -24,15 +28,17 @@ export default function ReminderGlobal() {
 
       console.log("⏰ GLOBAL NOW:", current, "| TARGET:", reminderTime);
 
+      // Trigger popup once when time condition is met
       if (reminderTime && current >= reminderTime && lastTriggered !== reminderTime) {
 
-        console.log("🔥 GLOBAL POPUP TRIGGERED");
+        console.log("GLOBAL POPUP TRIGGERED");
 
         setShowPopup(true);
         lastTriggered = current;
       }
     };
 
+    // Run check every 5 seconds
     const interval = setInterval(checkTime, 5000);
 
     return () => clearInterval(interval);

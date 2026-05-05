@@ -4,13 +4,16 @@ import api from "../api";
 import { REFRESH_TOKEN, ACCESS_TOKEN } from "../constants";
 import { useState, useEffect } from "react";
 
+// Protect routes by checking auth + token validity
 function ProtectedRoute({ children }) {
     const [isAuthorized, setIsAuthorized] = useState(null);
 
+    // Run auth check on mount
     useEffect(() => {
         auth().catch(() => setIsAuthorized(false))
     }, [])
 
+    // Refresh expired access token using refresh token
     const refreshToken = async () => {
         const refreshToken = localStorage.getItem(REFRESH_TOKEN);
         try {
@@ -29,6 +32,7 @@ function ProtectedRoute({ children }) {
         }
     };
 
+    // Validate access token or trigger refresh if expired
     const auth = async () => {
         const token = localStorage.getItem(ACCESS_TOKEN);
         if (!token) {
@@ -46,10 +50,12 @@ function ProtectedRoute({ children }) {
         }
     };
 
+    // Show loading while auth status is unknown
     if (isAuthorized === null) {
         return <div>Loading...</div>;
     }
 
+    // Render protected content or redirect to login
     return isAuthorized ? children : <Navigate to="/login" />;
 }
 

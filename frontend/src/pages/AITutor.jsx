@@ -6,6 +6,7 @@ import "../styles/ai-tutor.css";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+// Format AI text into readable paragraphs if unstructured
 function formatAiText(text) {
 
   if (!text) return "";
@@ -23,24 +24,32 @@ function formatAiText(text) {
   return text.replace(/\. /g, ".\n\n").trim();
 }
 
+// AI Tutor chat interface with session history
 export default function AiTutor() {
 
   const location = useLocation();
+
+  // Context passed from navigation (optional)
   const slideContext = location.state?.slideContent || "";
   const topicContext = location.state?.topic || "General";
 
+  // Session state
   const [sessionId, setSessionId] = useState(null);
   const [activeSession, setActiveSession] = useState(null);
 
+  // Input state
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
 
+  // Messages + history
   const [messages, setMessages] = useState([]);
   const [historySessions, setHistorySessions] = useState([]);
 
+  // Refs for initialization + auto scroll
   const initialized = useRef(false);
   const messagesEndRef = useRef(null);
 
+  // Quick prompt suggestions
   const prompts = [
     "Explain this topic in simple terms",
     "Give me a real world example",
@@ -49,15 +58,15 @@ export default function AiTutor() {
     "Summarise this topic for me"
   ];
 
+  // Auto-scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
 
-  /* ------------------------
-     Load conversation list
-  ------------------------ */
+  /* Load conversation list */
 
+  // Fetch all chat sessions
   const loadHistory = async () => {
 
     try {
@@ -74,10 +83,9 @@ export default function AiTutor() {
   };
 
 
-  /* ------------------------
-     Load selected session
-  ------------------------ */
+  /* Load selected session */
 
+  // Fetch all chat sessions
   const loadSession = async (session) => {
 
     try {
@@ -105,10 +113,9 @@ export default function AiTutor() {
   };
 
 
-  /* ------------------------
-     Init session
-  ------------------------ */
+  /* Init session */
 
+  // Create initial session on first load
   useEffect(() => {
 
     if (initialized.current) return;
@@ -130,6 +137,7 @@ export default function AiTutor() {
 
         loadHistory();
 
+        // Send initial context if coming from lesson
         if (slideContext) {
 
           const introMessage = `I am studying the topic "${topicContext}".
@@ -166,15 +174,15 @@ Please explain this clearly for me.`;
   }, []);
 
 
-  /* ------------------------
-     Send message
-  ------------------------ */
+  /* Send message */
 
+  // Send user message to AI and handle response
   const sendToAi = async (text, overrideSession = null) => {
 
     const sid = overrideSession || sessionId;
     if (!sid) return;
 
+    // Add user message
     setMessages(prev => [...prev, { role: "user", text }]);
     setInput("");
     setSending(true);
@@ -211,7 +219,7 @@ Please explain this clearly for me.`;
 
   };
 
-
+  // Handle send button click
   const handleSend = () => {
 
     const text = input.trim();
@@ -221,12 +229,12 @@ Please explain this clearly for me.`;
 
   };
 
-
+  // Insert quick prompt into input
   const handlePrompt = (prompt) => {
     setInput(prompt);
   };
 
-
+  // Submit on Enter key
   const onKeyDown = (e) => {
 
     if (e.key === "Enter" && !e.shiftKey) {
@@ -243,6 +251,7 @@ Please explain this clearly for me.`;
 
       <div className="ai-page">
 
+        {/* Header */}
         <div className="ai-header">
 
           <h1>AI Tutor</h1>
@@ -253,7 +262,7 @@ Please explain this clearly for me.`;
 
         </div>
 
-
+        {/* Prompt suggestions */}
         <div className="prompt-bar">
 
           {prompts.map((p, i) => (
@@ -287,7 +296,7 @@ Please explain this clearly for me.`;
                     msg.role === "user" ? "user" : "bot"
                   }`}
                 >
-
+                  {/* Render markdown for AI responses */}
                   {msg.role === "assistant" ? (
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {msg.text}
@@ -300,6 +309,7 @@ Please explain this clearly for me.`;
 
               ))}
 
+              {/* Typing indicator */}
               {sending && (
                 <div className="ai-message bot">Typing…</div>
               )}
@@ -308,6 +318,7 @@ Please explain this clearly for me.`;
 
             </div>
 
+            {/* Input box */}
             <div className="ai-input">
 
               <input
@@ -330,9 +341,7 @@ Please explain this clearly for me.`;
 
           </div>
 
-
-          {/* HISTORY */}
-
+          {/* Conversation history */}
           <div className="ai-history">
 
             <h3>Conversation History</h3>

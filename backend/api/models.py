@@ -1,11 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
-# ========================================
-# LEARNING STRUCTURE (CORE)
-# ========================================
-
+# Learning Structure Core
 class Subject(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
@@ -13,6 +12,7 @@ class Subject(models.Model):
     def __str__(self):
         return self.name
 
+# Main subject areas such as Maths, Science, English
 class Category(models.Model):
 
     LEVEL_CHOICES = [
@@ -57,6 +57,7 @@ class Category(models.Model):
     def __str__(self):
         return f"{self.subject.name} - {self.name} ({self.level})"
 
+# Categories inside subjects (with difficulty level)
 class Topic(models.Model):
     category = models.ForeignKey(
         Category,
@@ -72,11 +73,11 @@ class Topic(models.Model):
     def __str__(self):
         return self.name
 
-    # ✅ ADD THIS
     @property
     def subject(self):
         return self.category.subject
 
+# Slide based lesson content
 class Slide(models.Model):
     topic = models.ForeignKey(
         Topic,
@@ -92,6 +93,7 @@ class Slide(models.Model):
     def __str__(self):
         return f"{self.topic.name} - Slide {self.order}"
 
+# Stores completed slides by user
 class SlideCompletion(models.Model):
 
     user = models.ForeignKey(
@@ -114,6 +116,7 @@ class SlideCompletion(models.Model):
     def __str__(self):
         return f"{self.user.username} completed {self.slide}"
 
+# Tracks user actions across platform
 class UserActivity(models.Model):
 
     ACTIVITY_TYPES = [
@@ -130,14 +133,14 @@ class UserActivity(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.activity_type}"
 
-
+# Stores progress for each topic
 class TopicProgress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
 
     slides_completed = models.IntegerField(default=0)
 
-    # 👇 this tracks the last time progress changed
+    # this tracks the last time progress changed
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -157,10 +160,7 @@ class TopicProgress(models.Model):
         return f"{self.user} - {self.topic} ({self.progress_percent}%)"
 
 
-# ========================================
-# NOTES
-# ========================================
-
+# Notes model
 class Note(models.Model):
     title = models.CharField(max_length=100)
     content = models.TextField()
@@ -176,10 +176,8 @@ class Note(models.Model):
         return self.title
 
 
-# ========================================
-# EXPLAIN FEATURE
-# ========================================
-
+# Explain feature
+# Prompt shown to user
 class ExplainPrompt(models.Model):
 
     DIFFICULTY_CHOICES = [
@@ -201,7 +199,6 @@ class ExplainPrompt(models.Model):
     )
 
     difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES)
-
     title = models.CharField(max_length=200, blank=True, default="")
     concept_text = models.TextField()
 
@@ -213,7 +210,7 @@ class ExplainPrompt(models.Model):
     def __str__(self):
         return f"{self.topic.name} ({self.difficulty})"
 
-
+# User response + AI feedback
 class ExplainAttempt(models.Model):
     user = models.ForeignKey(
         User,
@@ -243,10 +240,7 @@ class ExplainAttempt(models.Model):
         return f"{self.user.username} – {self.prompt.topic.name}"
 
 
-# ========================================
-# AI CHAT SYSTEM
-# ========================================
-
+# AI Chat System
 class ChatSession(models.Model):
 
     LEARNING_MODE_CHOICES = [
@@ -263,7 +257,6 @@ class ChatSession(models.Model):
         related_name="chat_sessions"
     )
 
-    # Keeping as text intentionally (flexible conversation context)
     subject = models.CharField(max_length=100)
     topic = models.CharField(max_length=100)
 
@@ -283,7 +276,7 @@ class ChatSession(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.subject} ({self.topic})"
 
-
+# Individual messages inside chat
 class ChatMessage(models.Model):
 
     ROLE_CHOICES = [
@@ -307,10 +300,7 @@ class ChatMessage(models.Model):
         return f"{self.role} message in session {self.session.id}"
 
 
-# ========================================
-# LEARNING ANALYTICS
-# ========================================
-
+# Learning Analytics model
 class LearningAnalytics(models.Model):
 
     user = models.ForeignKey(
@@ -347,11 +337,7 @@ class LearningAnalytics(models.Model):
         return f"{self.user.username} – {self.topic.name}"
 
 
-# ========================================
-# QUIZ SYSTEM
-# ========================================
-
-
+# Quiz System
 class Quiz(models.Model):
 
     DIFFICULTY_CHOICES = [
@@ -386,7 +372,7 @@ class Quiz(models.Model):
     def __str__(self):
         return f"{self.topic.name} ({self.difficulty})"
 
-
+# Questions inside quiz
 class Question(models.Model):
 
     OPTION_CHOICES = [
@@ -417,7 +403,7 @@ class Question(models.Model):
     def __str__(self):
         return self.question_text
 
-
+# Stores completed quiz attempts
 class UserQuizAttempt(models.Model):
 
     user = models.ForeignKey(
@@ -440,7 +426,7 @@ class UserQuizAttempt(models.Model):
     def __str__(self):
         return f"{self.user.username} – {self.quiz.topic.name} – {self.score}/{self.total_questions}"
 
-
+# Stores selected user answers
 class UserAnswer(models.Model):
 
     OPTION_CHOICES = [
@@ -471,8 +457,7 @@ class UserAnswer(models.Model):
     def __str__(self):
         return f"{self.attempt.user.username} – Q{self.question.id}"
 
-
-
+# User Settings
 class UserSettings(models.Model):
 
     user = models.OneToOneField(
@@ -484,24 +469,18 @@ class UserSettings(models.Model):
     notifications_enabled = models.BooleanField(default=False)
     reminder_time = models.TimeField(null=True, blank=True)
 
-    # ✅ REPLACE this
     last_sent_reminder_time = models.TimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username} settings"
 
-# ========================================
-# AUTO CREATE SETTINGS
-# ========================================
-
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
+# Auto create settings when user registers
 @receiver(post_save, sender=User)
 def create_user_settings(sender, instance, created, **kwargs):
     if created:
         UserSettings.objects.create(user=instance)
 
+# Email Verification
 class EmailVerification(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     code = models.CharField(max_length=6)

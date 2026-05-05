@@ -1,6 +1,4 @@
-/* =========================
-   PAGE BASE
-========================= */
+/* PAGE BASE */
 
 .explain-page-wrapper{
   padding:3rem 3.5rem;
@@ -19,9 +17,7 @@
 }
 
 
-/* =========================
-   HEADER
-========================= */
+/* HEADER */
 
 .explain-header {
   max-width:1300px;
@@ -50,14 +46,11 @@
 }
 
 
-/* =========================
-   MAIN LAYOUT
-========================= */
+/* MAIN LAYOUT */
 
 .explain-main {
   max-width:1300px;
   margin:0 auto calc(3rem * var(--font-scale));
-
   display:grid;
   grid-template-columns:1.6fr 1.4fr;
   gap:calc(3rem * var(--font-scale));
@@ -65,21 +58,15 @@
 }
 
 
-/* =========================
-   PANELS
-========================= */
+/* PANELS */
 
 .concept-panel,
 .user-panel {
-
   background:var(--bg-card);
   border:1px solid var(--border);
-
   border-radius:28px;
   padding:calc(2.8rem * var(--font-scale));
-
   box-shadow:0 12px 35px rgba(0,0,0,0.2);
-
   transition:all 0.25s ease;
 }
 
@@ -92,18 +79,14 @@
 .user-panel h2 {
   font-size: calc(1.8rem * var(--font-scale));
   font-weight:700;
-
   margin-bottom:calc(1.6rem * var(--font-scale));
   padding-bottom:calc(0.8rem * var(--font-scale));
-
   border-bottom:1px solid var(--border);
   color:var(--text-main);
 }
 
 
-/* =========================
-   MARKDOWN CONTENT
-========================= */
+/* MARKDOWN CONTENT */
 
 .concept-panel h3 {
   margin-bottom:calc(1.2rem * var(--font-scale));
@@ -149,17 +132,13 @@
 .concept-panel blockquote {
   margin:calc(1.5rem * var(--font-scale)) 0;
   padding:calc(1rem * var(--font-scale)) calc(1.2rem * var(--font-scale));
-
   border-left:4px solid #3b82f6;
   background:rgba(59,130,246,0.08);
-
   border-radius:12px;
 }
 
 
-/* =========================
-   USER PANEL
-========================= */
+/* USER PANEL */
 
 .helper-text {
   font-size:calc(0.95rem * var(--font-scale));
@@ -174,15 +153,11 @@
   width:100%;
   min-height:260px;
   resize:vertical;
-
   padding:calc(1.5rem * var(--font-scale));
-
   font-size:calc(1.05rem * var(--font-scale));
   line-height:1.7;
-
   border-radius:20px;
   border:1px solid var(--border);
-
   background:var(--bg-card);
   color:var(--text-main);
 }
@@ -198,40 +173,28 @@
 }
 
 
-/* =========================
-   CHARACTER COUNT
-========================= */
+/* CHARACTER COUNT */
 
 .char-count {
   font-size:calc(0.85rem * var(--font-scale));
   color:var(--text-muted);
-
   margin-top:calc(0.8rem * var(--font-scale));
   margin-bottom:calc(1.8rem * var(--font-scale));
-
   text-align:right;
 }
 
 
-/* =========================
-   BUTTON
-========================= */
+/* BUTTON */
 
 .submit-btn {
-
   padding:calc(0.9rem * var(--font-scale)) calc(2.5rem * var(--font-scale));
-
   border-radius:999px;
   border:none;
-
   background:linear-gradient(135deg,#3b82f6,#2563eb);
   color:white;
-
   font-size:calc(1rem * var(--font-scale));
   font-weight:700;
-
   cursor:pointer;
-
   transition:all 0.2s ease;
 }
 
@@ -246,9 +209,7 @@
 }
 
 
-/* =========================
-   FEEDBACK SECTION
-========================= */
+/* FEEDBACK SECTION */
 
 .feedback-wrapper {
   max-width:1300px;
@@ -256,25 +217,18 @@
 }
 
 .feedback-card {
-
   padding:calc(3rem * var(--font-scale));
-
   border-radius:28px;
-
   background:var(--bg-card);
   border:1px solid var(--border);
-
   box-shadow:0 12px 35px rgba(0,0,0,0.2);
-
   animation:fadeIn 0.4s ease forwards;
 }
 
 .feedback-score {
   font-size:calc(1.7rem * var(--font-scale));
   font-weight:800;
-
   color:#3b82f6;
-
   margin-bottom:calc(1.8rem * var(--font-scale));
 }
 
@@ -285,9 +239,7 @@
 }
 
 
-/* =========================
-   DROPDOWNS
-========================= */
+/* DROPDOWNS */
 
 .explain-header select {
 
@@ -296,41 +248,28 @@
 
   font-size:calc(0.95rem * var(--font-scale));
   font-weight:600;
-
   color:var(--text-main);
-
   border-radius:14px;
   border:1px solid var(--border);
-
   background:var(--bg-card);
-
   cursor:pointer;
 }
 
 
-/* =========================
-   CHIP
-========================= */
+/* CHIP */
 
 .chip {
-
   background:rgba(59,130,246,0.12);
   color:#3b82f6;
-
   padding:calc(0.45rem * var(--font-scale)) calc(1rem * var(--font-scale));
-
   border-radius:999px;
-
   font-weight:700;
   font-size:calc(0.9rem * var(--font-scale));
-
   margin-top:7px;
 }
 
 
-/* =========================
-   ANIMATION
-========================= */
+/* ANIMATION */
 
 @keyframes fadeIn {
 
@@ -347,24 +286,18 @@
 }
 
 
-/* =========================
-   PANEL SCROLL
-========================= */
+/* PANEL SCROLL */
 
 .concept-panel,
 .user-panel {
-
   height:650px;
-
   display:flex;
   flex-direction:column;
 }
 
 .panel-scroll {
-
   flex:1;
   overflow-y:auto;
-
   padding-right:10px;
 }
 
@@ -377,77 +310,179 @@
   border-radius:10px;
 }
 
-/* 🔥 CONCEPT HIDE OVERLAY */
+/* CONCEPT HIDE OVERLAY */
 
 .concept-panel {
   position: relative;
 }
 
-/* =========================
-   THEME-AWARE OVERLAY
-========================= */
+/* THEME-AWARE OVERLAY */
 
 .concept-overlay {
   position: absolute;
   inset: 0;
-
-  background: rgba(0, 0, 0, 0.4); /* base for dark */
-
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(6px);
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 28px;
-
   z-index: 5;
 }
 
 
 /* INNER CARD */
 .concept-overlay p {
-
   background: var(--bg-card);
-
   color: var(--text-main);
-
   padding: 1rem 1.5rem;
   border-radius: 12px;
-
   font-weight: 600;
   font-size: 1rem;
-
   box-shadow: 0 8px 25px rgba(0,0,0,0.2);
 }
 
 
-/* =========================
-   RESPONSIVE
-========================= */
+/* RESPONSIVE */
 
-@media (max-width:1100px) {
+@media (max-width: 768px) {
 
-  .explain-main {
-    grid-template-columns:1fr;
+  /* PAGE WRAPPER */
+  .explain-page-wrapper {
+    padding: 1.5rem 1rem;
   }
-
-}
-
-@media (max-width:768px) {
 
   .explain-page {
-    padding:2rem;
+    padding: 0;
   }
 
-  .concept-panel,
-  .user-panel,
-  .feedback-card {
-    padding:calc(2rem * var(--font-scale));
+  /* HEADER */
+  .explain-header {
+    margin-bottom: 2rem;
   }
 
   .explain-header h1 {
-    font-size:calc(2.2rem * var(--font-scale));
+    font-size: 1.8rem;
   }
 
+  .explain-header p {
+    font-size: 0.9rem;
+  }
+
+  /* DROPDOWNS STACK */
+  .explain-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .explain-header select {
+    width: 100%;
+    font-size: 0.9rem;
+  }
+
+  /* MAIN LAYOUT → STACK */
+  .explain-main {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  /* PANELS */
+  .concept-panel,
+  .user-panel {
+    padding: 16px;
+    border-radius: 18px;
+    height: auto;
+  }
+
+  .concept-panel h2,
+  .user-panel h2 {
+    font-size: 1.2rem;
+  }
+
+  /* SCROLL AREA */
+  .panel-scroll {
+    max-height: 300px;
+  }
+
+  /* TEXT CONTENT */
+  .concept-panel p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .concept-panel h3 {
+    font-size: 1.1rem;
+  }
+
+  /* TEXTAREA */
+  .user-panel textarea {
+    min-height: 180px;
+    font-size: 0.9rem;
+    padding: 12px;
+  }
+
+  /* BUTTON */
+  .submit-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+
+  /* CHARACTER COUNT */
+  .char-count {
+    font-size: 0.75rem;
+  }
+
+  /* FEEDBACK */
+  .feedback-card {
+    padding: 20px;
+  }
+
+  .feedback-score {
+    font-size: 1.3rem;
+  }
+
+  /* CHIP */
+  .chip {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .explain-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .explain-header p {
+    font-size: 0.85rem;
+  }
+
+  .concept-panel h2,
+  .user-panel h2 {
+    font-size: 1.05rem;
+  }
+
+  .concept-panel p,
+  .concept-panel li {
+    font-size: 0.85rem;
+  }
+
+  .concept-panel blockquote {
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+
+  .user-panel textarea {
+    font-size: 0.85rem;
+  }
+
+  .submit-btn {
+    font-size: 0.85rem;
+  }
+
+  .feedback-score {
+    font-size: 1.1rem;
+  }
 }

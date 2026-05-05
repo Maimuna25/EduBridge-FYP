@@ -49,7 +49,7 @@ urlpatterns = [
     path("user/verify-email/", VerifyEmailView.as_view()),
     path("user/resend-code/", ResendCodeView.as_view()),
 
-# 🔔 NEW: Reminder API
+    # Reminder API
     path("reminder/set/", SetReminderView.as_view()),
 
     # AI Tutor
@@ -72,5 +72,6 @@ urlpatterns = [
     path("progress/update/", UpdateTopicProgressView.as_view()),
     path("progress/", TopicProgressView.as_view()),
 
+    # Study Insights
     path("study-insights/", StudyInsightsView.as_view()),
 ]

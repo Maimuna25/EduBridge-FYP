@@ -4,12 +4,24 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
+import random
+from django.conf import settings
+from django.core.mail import send_mail
 
 from datetime import timedelta, datetime
 from django.db.models import Count, Avg
 from django.db.models.functions import TruncDate, TruncHour
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from rest_framework.response import Response
+from django.utils import timezone
+
+import os
+from openai import OpenAI
+
+
+
+# Local models
 from .models import (
     Subject,
     Category,
@@ -30,6 +42,7 @@ from .models import (
     EmailVerification
 )
 
+# Local serializers
 from .serializers import (
     UserSerializer,
     NoteSerializer,
@@ -41,10 +54,8 @@ from .serializers import (
     SlideSerializer,
 )
 
-import os
-from openai import OpenAI
-
-
+# Current User View
+# Returns logged-in user details
 class CurrentUserView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -56,10 +67,7 @@ class CurrentUserView(APIView):
         })
 
 
-# ========================================
-# NOTES
-# ========================================
-
+# Notes view
 class NoteListCreate(generics.ListCreateAPIView):
     serializer_class = NoteSerializer
     permission_classes = [IsAuthenticated]
@@ -79,32 +87,29 @@ class NoteDelete(generics.DestroyAPIView):
         return Note.objects.filter(author=self.request.user)
 
 
-import random
-from django.conf import settings
-from django.core.mail import send_mail
-from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
-
+# User Registration + Email Verification
 class CreateUserView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+
+        # Read request data
         username = request.data.get("username")
         email = request.data.get("email")
         password = request.data.get("password")
 
-        # ✅ Validate input
+        # Validate required fields
         if not email or not username or not password:
             return Response(
                 {"error": "Username, email and password are required"},
                 status=400
             )
 
-        # 🚫 prevent duplicate email
+        # Prevent duplicate email accounts
         if User.objects.filter(email=email).exists():
             return Response({"error": "Email already registered"}, status=400)
 
-        # create inactive user
+        # Create new user account
         user = User.objects.create_user(
             username=username,
             email=email,
@@ -112,24 +117,22 @@ class CreateUserView(APIView):
             is_active=True
         )
 
-        # generate code
+        # Generate 6 digit verification code
         code = str(random.randint(100000, 999999))
 
-        # ✅ safe create/update
+        # Create verification record
         verification, created = EmailVerification.objects.get_or_create(user=user)
-
         verification.code = code
         verification.is_verified = False
         verification.created_at = timezone.now()
         verification.attempts = 0
         verification.save()
 
-        # send email
-
+        # Send verification email
         send_mail(
             "EduBridge Verification Code",
             f"Your verification code is: {code}",
-            settings.EMAIL_HOST_USER,  # ✅ FIXED
+            settings.EMAIL_HOST_USER,
             [email],
             fail_silently=False,
         )
@@ -139,7 +142,7 @@ class CreateUserView(APIView):
             "email": email
         })
 
-
+# Verifies user email using code
 class VerifyEmailView(APIView):
     permission_classes = [AllowAny]
 
@@ -169,21 +172,21 @@ class VerifyEmailView(APIView):
                 status=400
             )
 
-        # ❌ Code expired (10 minutes)
+        # Code expired (10 minutes)
         if verification.created_at < timezone.now() - timedelta(minutes=10):
             return Response(
                 {"error": "Verification code expired"},
                 status=400
             )
 
-        # ❌ Too many attempts
+        # Too many attempts
         if verification.attempts >= 5:
             return Response(
                 {"error": "Too many attempts. Please request a new code."},
                 status=400
             )
 
-        # ❌ Incorrect code
+        # Incorrect code
         if verification.code != code:
             verification.attempts += 1
             verification.save()
@@ -193,8 +196,6 @@ class VerifyEmailView(APIView):
                 status=400
             )
 
-        # ✅ SUCCESS
-
         verification.is_verified = True
         verification.attempts = 0
         verification.save()
@@ -202,7 +203,7 @@ class VerifyEmailView(APIView):
         user.is_active = True
         user.save()
 
-        # ✅ Generate JWT tokens (auto login)
+        # Generate JWT tokens (auto login)
         refresh = RefreshToken.for_user(user)
 
         return Response({
@@ -249,10 +250,7 @@ class ResendCodeView(APIView):
         return Response({"message": "New code sent"})
 
 
-# ========================================
-# QUIZ SYSTEM
-# ========================================
-
+# Quiz System
 class QuizListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -314,20 +312,24 @@ class SubmitQuizView(APIView):
 
     def post(self, request):
 
+        # Get quiz id and submitted answers
         quiz_id = request.data.get("quiz_id")
         answers = request.data.get("answers", {})
 
+        # Validate quiz id
         if not quiz_id:
             return Response(
                 {"error": "quiz_id required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Get quiz and related questions
         quiz = get_object_or_404(Quiz, id=quiz_id)
         questions = quiz.questions.all()
 
         score = 0
 
+        # Create user attempt record
         attempt = UserQuizAttempt.objects.create(
             user=request.user,
             quiz=quiz,
@@ -336,43 +338,38 @@ class SubmitQuizView(APIView):
             completed_at=timezone.now()
         )
 
+        # Check each submitted answer
         for question in questions:
 
-            selected = answers.get(str(question.id), None)
-
+            selected = answers.get(str(question.id), "")
             is_correct = selected == question.correct_option
 
             if is_correct:
                 score += 1
 
+            # Save answer record
             UserAnswer.objects.create(
                 attempt=attempt,
                 question=question,
-                selected_option=selected if selected else "",
+                selected_option=selected,
                 is_correct=is_correct
             )
 
+        # Update final score
         attempt.score = score
         attempt.save()
 
-        attempt.score = score
-        attempt.save()
-
+        # Log activity
         UserActivity.objects.create(
             user=request.user,
             activity_type="quiz"
         )
 
+        # Return results
         return Response({
             "score": score,
             "total": questions.count()
         })
-
-        return Response({
-            "score": score,
-            "total": questions.count()
-        })
-
 
 class UserQuizHistoryView(APIView):
     permission_classes = [IsAuthenticated]
@@ -400,10 +397,8 @@ class UserQuizHistoryView(APIView):
         ])
 
 
-# ========================================
-# AI HELPER
-# ========================================
-
+# AI Response Helper
+# Safely extracts text from OpenAI response
 def extract_text_from_response(result):
 
     try:
@@ -426,15 +421,7 @@ def extract_text_from_response(result):
         return "Sorry — I couldn't generate a response."
 
 
-# ========================================
-# SESSION SWITCH
-# ========================================
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.utils import timezone
-
+# Session Switch
 class SwitchSessionView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -471,10 +458,7 @@ class SwitchSessionView(APIView):
         })
 
 
-# ========================================
-# AI TUTOR
-# ========================================
-
+# AI Tutor Chatbot
 class AiTutorView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -575,10 +559,7 @@ Instructions:
             "reply": assistant_text
         })
 
-# ========================================
-# CHAT HISTORY
-# ========================================
-
+# Chat History
 class ChatHistoryView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -608,6 +589,7 @@ class ChatHistoryView(APIView):
             ]
         })
 
+# Chat Session
 class ChatSessionsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -627,10 +609,7 @@ class ChatSessionsView(APIView):
         ])
 
 
-# ========================================
-# SUBJECT / CATEGORY / TOPIC / SLIDE API
-# ========================================
-
+# Subject / Category / Topic / Slide API
 class SubjectViewSet(viewsets.ModelViewSet):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
@@ -651,10 +630,7 @@ class SlideViewSet(viewsets.ModelViewSet):
     serializer_class = SlideSerializer
     permission_classes = [IsAuthenticated]
 
-# ========================================
-# TOPIC SLIDES
-# ========================================
-
+# Topic Slides
 class TopicSlidesView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -666,7 +642,7 @@ class TopicSlidesView(APIView):
             topic=topic
         ).order_by("order")
 
-        # ✅ Track slide activity (ONCE per visit)
+        # Track slide activity (ONCE per visit)
         UserActivity.objects.create(
             user=request.user,
             activity_type="slide"
@@ -677,9 +653,7 @@ class TopicSlidesView(APIView):
         return Response(serializer.data)
 
 
-# ========================================
-# PROGRESS SYSTEM
-# ========================================
+# Topic Progress System
 class UpdateTopicProgressView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -701,10 +675,7 @@ class UpdateTopicProgressView(APIView):
         # Prevent impossible numbers
         slides_completed = min(slides_completed, total_slides)
 
-        # ========================================
-        # ✅ CREATE SLIDE COMPLETION RECORDS (FIX)
-        # ========================================
-
+        # Create Slide Completion Records
         completed_slides = slides[:slides_completed]
 
         for slide in completed_slides:
@@ -733,7 +704,7 @@ class TopicProgressView(APIView):
             TopicProgress.objects
             .filter(user=request.user)
             .select_related("topic", "topic__category", "topic__category__subject")
-            .order_by("-updated_at")   # 🔥 newest first
+            .order_by("-updated_at")
         )
 
         print("Progress Items Found:", progress_items.count())
@@ -745,7 +716,7 @@ class TopicProgressView(APIView):
                 "subject": p.topic.category.subject.slug,
                 "progress": p.progress_percent,
                 "slides_completed": p.slides_completed,
-                "updated_at": p.updated_at,   # 🔥 important
+                "updated_at": p.updated_at,
             }
             for p in progress_items
         ]
@@ -850,7 +821,7 @@ Instructions:
             })
 
         except Exception as e:
-            # ✅ Track explain activity
+            # Track explain activity
             UserActivity.objects.create(
                 user=request.user,
                 activity_type="explain"
@@ -860,10 +831,8 @@ Instructions:
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-# ========================================
-# STUDY INSIGHTS ANALYTICS
-# ========================================
 
+# Study Insight Analytics
 class StudyInsightsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -875,10 +844,7 @@ class StudyInsightsView(APIView):
         DAYS_RANGE = 30
         last_period = now - timedelta(days=DAYS_RANGE)
 
-        # ========================================
-        # LATEST ATTEMPTS PER QUIZ
-        # ========================================
-
+        # Latest Attempts per quiz
         all_attempts = (
             UserQuizAttempt.objects
             .filter(user=user)
@@ -894,10 +860,7 @@ class StudyInsightsView(APIView):
                 attempts.append(a)
                 seen.add(a.quiz_id)
 
-        # ========================================
-        # STUDY FREQUENCY
-        # ========================================
-
+        # Study Frequency
         session_hours = set()
 
         slide_hours = (
@@ -943,19 +906,13 @@ class StudyInsightsView(APIView):
             7
         ) if DAYS_RANGE > 0 else 0
 
-        # ========================================
-        # ACCURACY
-        # ========================================
-
+        # Accuracy
         total_score = sum((a.score or 0) for a in attempts)
         total_q = sum((a.total_questions or 0) for a in attempts)
 
         average_accuracy = round((total_score / total_q) * 100, 1) if total_q > 0 else 0
 
-        # ========================================
-        # TOPICS MASTERED
-        # ========================================
-
+        # Topics Mastered
         topic_progress = TopicProgress.objects.filter(user=user)
 
         topics_mastered = sum(
@@ -964,10 +921,7 @@ class StudyInsightsView(APIView):
 
         topics_total = Topic.objects.count()
 
-        # ========================================
-        # WEEKLY ACTIVITY
-        # ========================================
-
+        # Weekly Activity
         week_days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         weekly_data = {d: 0 for d in week_days}
 
@@ -980,10 +934,7 @@ class StudyInsightsView(APIView):
             day = week_days[a.completed_at.weekday()]
             weekly_data[day] += a.total_questions
 
-        # ========================================
-        # ACCURACY BY TOPIC
-        # ========================================
-
+        # Accuracy by topic
         topic_scores = {}
 
         for a in attempts:
@@ -1006,10 +957,7 @@ class StudyInsightsView(APIView):
             for t, d in topic_scores.items()
         ]
 
-        # ========================================
-        # COMMON MISTAKES
-        # ========================================
-
+        # Common Mistakes
         mistakes = (
             UserAnswer.objects
             .filter(attempt__user=user, is_correct=False)
@@ -1022,20 +970,14 @@ class StudyInsightsView(APIView):
             m["question__quiz__topic__name"] for m in mistakes
         ]
 
-        # ========================================
-        # STRENGTHS
-        # ========================================
-
+        # Strengths
         strengths = [
             t["label"]
             for t in accuracy_by_topic
             if t["value"] >= 85
         ][:2]
 
-        # ========================================
-        # STUDY STREAK (STRICT)
-        # ========================================
-
+        # Study Streak
         activity_days = set(
             SlideCompletion.objects
             .filter(user=user, completed_at__isnull=False)
@@ -1073,10 +1015,7 @@ class StudyInsightsView(APIView):
                 else:
                     break
 
-        # ========================================
-        # TREND DETECTION
-        # ========================================
-
+        # Trend Detection
         recent_attempts = UserQuizAttempt.objects.filter(
             user=user,
             completed_at__gte=now - timedelta(days=14)
@@ -1103,10 +1042,7 @@ class StudyInsightsView(APIView):
             elif second_avg < first_avg - 5:
                 trend = "declining"
 
-        # ========================================
-        # PERFORMANCE LEVEL
-        # ========================================
-
+        # Performance Level
         if average_accuracy < 50:
             performance_level = "Beginner"
         elif average_accuracy < 75:
@@ -1114,9 +1050,6 @@ class StudyInsightsView(APIView):
         else:
             performance_level = "Advanced"
 
-        # ========================================
-        # NEXT ACTION + AI FEEDBACK (ALIGNED)
-        # ========================================
 
         next_action = "Keep practicing regularly."
 
@@ -1158,10 +1091,7 @@ class StudyInsightsView(APIView):
                 "You are making steady progress. Continue refining your understanding."
             )
 
-        # ========================================
-        # GOALS SYSTEM
-        # ========================================
-
+        # Goals System
         goals = []
 
         target_accuracy = 80
@@ -1220,6 +1150,7 @@ class StudyInsightsView(APIView):
             "goals": goals
         })
 
+# Reminder Settings
 class SetReminderView(APIView):
     permission_classes = [IsAuthenticated]
 

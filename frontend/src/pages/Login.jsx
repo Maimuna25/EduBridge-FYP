@@ -1,12 +1,13 @@
 import Form from "../components/Form";
 import "../styles/loginPage.css";
 
+// Login page with marketing section + auth form
 export default function Login() {
   return (
     <main className="login-page">
       <div className="login-wrapper">
 
-        {/* LEFT SIDE - MARKETING / INFO */}
+        {/* Left side: platform intro / marketing */}
         <section className="login-left">
           <h1>
             Learn Smarter,
@@ -19,6 +20,7 @@ export default function Login() {
             to build confidence in Mathematics, Science, and English.
           </p>
 
+          {/* Feature highlights */}
           <div className="features">
             <div>🤖 Personalised AI tutoring</div>
             <div>🧠 Explain-it-back learning</div>
@@ -26,7 +28,7 @@ export default function Login() {
           </div>
         </section>
 
-        {/* RIGHT SIDE - LOGIN FORM */}
+        {/* Right side: login form */}
         <section className="login-right">
           <Form
             route="/api/token/"

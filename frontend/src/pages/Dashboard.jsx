@@ -3,27 +3,29 @@ import { useNavigate } from "react-router-dom";
 import api from "../api";
 import "../styles/dashboard.css";
 
+// Main dashboard page with subjects, progress, and notes
 export default function Dashboard() {
   const navigate = useNavigate();
   const [showHelper, setShowHelper] = useState(false);
 
-  // NOTES
+  // Notes state
   const [notes, setNotes] = useState([]);
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [selectedNote, setSelectedNote] = useState(null);
 
-  // EDIT STATE
+  // Edit state for notes
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
 
-  // SUBJECT DATA
+  // Data for subjects, topics, and progress
   const [subjects, setSubjects] = useState([]);
   const [topics, setTopics] = useState([]);
   const [progress, setProgress] = useState([]);
   const [recentTopics, setRecentTopics] = useState([]);
 
+  // Initial data fetch
   useEffect(() => {
     getNotes();
     fetchSubjects();
@@ -31,10 +33,12 @@ export default function Dashboard() {
     fetchProgress();
   }, []);
 
+  // Build recent topics when data changes
   useEffect(() => {
     buildRecentTopics();
   }, [topics, progress]);
 
+  // Fetch subjects from API
   const fetchSubjects = async () => {
     try {
       const res = await api.get("/api/subjects/");
@@ -44,6 +48,7 @@ export default function Dashboard() {
     }
   };
 
+  // Fetch topics from API
   const fetchTopics = async () => {
     try {
       const res = await api.get("/api/topics/");
@@ -53,6 +58,7 @@ export default function Dashboard() {
     }
   };
 
+  // Fetch user progress
   const fetchProgress = async () => {
     try {
       const res = await api.get("/api/progress/");
@@ -62,6 +68,7 @@ export default function Dashboard() {
     }
   };
 
+  // Merge topics + progress into recent activity
   const buildRecentTopics = () => {
     if (!topics.length || !progress.length) return;
 
@@ -92,8 +99,8 @@ export default function Dashboard() {
     setRecentTopics(merged.slice(0, 4));
   };
 
-  // ================= NOTES =================
 
+  // Fetch notes
   const getNotes = () => {
     api
       .get("/api/notes/")
@@ -101,6 +108,7 @@ export default function Dashboard() {
       .catch((err) => alert(err));
   };
 
+  // Delete note by ID
   const deleteNote = (id) => {
     api
       .delete(`/api/notes/delete/${id}/`)
@@ -110,6 +118,7 @@ export default function Dashboard() {
       .catch((error) => alert(error));
   };
 
+  // Create new note
   const createNote = (e) => {
     e.preventDefault();
 
@@ -125,6 +134,7 @@ export default function Dashboard() {
       .catch((err) => alert(err));
   };
 
+  // Update selected note
   const updateNote = () => {
     api
       .put(`/api/notes/${selectedNote.id}/`, {
@@ -139,6 +149,7 @@ export default function Dashboard() {
       .catch((err) => alert(err));
   };
 
+  // Navigate to subject page
   const goToSubject = (subject) => {
     navigate("/subjects", { state: { subject } });
   };
@@ -398,8 +409,7 @@ export default function Dashboard() {
   );
 }
 
-/* ===== PROGRESS COMPONENT ===== */
-
+/* Progress bar component for topic completion */
 function Progress({ title, percent, subject }) {
   const getColor = () => {
     const name = (subject || "").toLowerCase();

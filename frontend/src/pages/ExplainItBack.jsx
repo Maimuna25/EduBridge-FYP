@@ -1,38 +1,44 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import "../styles/explain-it-back.css";
-
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+// Explain It Back feature for testing user understanding
 export default function ExplainItBack() {
 
+  // Difficulty levels
   const DIFFICULTIES = ["Beginner", "Intermediate", "Advanced"];
 
+  // Subject + topic data
   const [subjects, setSubjects] = useState([]);
   const [topics, setTopics] = useState([]);
 
+  // Subject + topic data
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("");
 
+  // Difficulty selection
   const [difficulty, setDifficulty] = useState("Beginner");
 
+  // Prompt data
   const [prompt, setPrompt] = useState(null);
   const [loadingPrompt, setLoadingPrompt] = useState(false);
 
+  // User input state
   const [explanation, setExplanation] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Feedback + score
   const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState(null);
 
-  // 🔥 NEW STATE
+  // Track typing to hide concept
   const [isTyping, setIsTyping] = useState(false);
 
-  /* ============================= */
   /* FETCH SUBJECTS + TOPICS */
-  /* ============================= */
 
+  // Load subjects and topics on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -56,20 +62,21 @@ export default function ExplainItBack() {
     fetchData();
   }, []);
 
+  // Filter topics by selected subject
   const filteredTopics = topics.filter(
     (t) => t.subject === selectedSubject
   );
 
+  // Auto-select first topic when subject changes
   useEffect(() => {
     if (filteredTopics.length > 0) {
       setSelectedTopic(filteredTopics[0].name);
     }
   }, [selectedSubject, topics]);
 
-  /* ============================= */
   /* FETCH PROMPT */
-  /* ============================= */
 
+  // Fetch explanation prompt when filters change
   useEffect(() => {
 
     if (!selectedSubject || !selectedTopic) return;
@@ -115,10 +122,9 @@ export default function ExplainItBack() {
 
   }, [selectedSubject, selectedTopic, difficulty]);
 
-  /* ============================= */
   /* SUBMIT */
-  /* ============================= */
 
+  // Submit user explanation for AI feedback
   const handleSubmit = async () => {
 
     if (!prompt?.id) return;
@@ -156,9 +162,7 @@ export default function ExplainItBack() {
 
   };
 
-  /* ============================= */
   /* RENDER */
-  /* ============================= */
 
   return (
 
@@ -187,6 +191,7 @@ export default function ExplainItBack() {
               ))}
             </select>
 
+            {/* Topic selector */}
             <select
               value={selectedTopic}
               onChange={(e) => setSelectedTopic(e.target.value)}
@@ -198,6 +203,7 @@ export default function ExplainItBack() {
               ))}
             </select>
 
+            {/* Difficulty selector */}
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
@@ -213,10 +219,10 @@ export default function ExplainItBack() {
 
         </div>
 
-
+        {/* Main layout */}
         <div className="explain-main">
 
-          {/* CONCEPT PANEL */}
+          {/* Concept Panel */}
           <div className="concept-panel">
 
             <h2>💡 Concept Explanation</h2>
@@ -237,7 +243,7 @@ export default function ExplainItBack() {
 
             </div>
 
-            {/* 🔥 OVERLAY */}
+            {/* Hide concept while typing */}
             {isTyping && (
               <div className="concept-overlay">
                 <p>🔒 Hidden while you write your explanation</p>
@@ -247,7 +253,7 @@ export default function ExplainItBack() {
           </div>
 
 
-          {/* USER PANEL */}
+          {/* User input panel */}
           <div className="user-panel">
 
             <h2>Your Explanation</h2>
@@ -258,19 +264,22 @@ export default function ExplainItBack() {
                 Now explain the concept in your own words.
               </p>
 
+              {/* Explanation input */}
               <textarea
                 placeholder="Type your explanation here..."
                 value={explanation}
                 onChange={(e) => setExplanation(e.target.value)}
-                onFocus={() => setIsTyping(true)}   // 🔥 trigger
-                onBlur={() => setIsTyping(false)}   // 🔥 optional
+                onFocus={() => setIsTyping(true)}
+                onBlur={() => setIsTyping(false)}
                 disabled={loadingPrompt}
               />
 
+              {/* Character count */}
               <div className="char-count">
                 {explanation.length} characters
               </div>
 
+              {/* Submit button */}
               <button
                 className="submit-btn"
                 disabled={
@@ -290,7 +299,7 @@ export default function ExplainItBack() {
 
         </div>
 
-
+        {/* Feedback section */}
         {feedback && (
 
           <div className="feedback-wrapper">

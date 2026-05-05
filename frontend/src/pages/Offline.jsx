@@ -10,32 +10,34 @@ import {
   getCachedTopics
 } from "../utils/offlineManager";
 
+// Offline page for managing downloaded quizzes and topics
 export default function Offline() {
 
   const navigate = useNavigate();
   const token = localStorage.getItem("access");
 
+  // User + data state
   const [userId, setUserId] = useState(null);
 
   const [downloadedQuizzes, setDownloadedQuizzes] = useState([]);
   const [downloadedTopics, setDownloadedTopics] = useState([]);
-
   const [availableQuizzes, setAvailableQuizzes] = useState([]);
   const [availableTopics, setAvailableTopics] = useState([]);
 
+  // Search + filter state
   const [search, setSearch] = useState("");
   const [subjectFilter, setSubjectFilter] = useState("all");
 
-  /* =========================
-     FETCH CURRENT USER
-  ========================= */
+  /* Fetch Current User */
 
+  // Get current user (online or fallback to local storage)
   useEffect(() => {
     getCurrentUser();
   }, []);
 
   async function getCurrentUser() {
 
+    // Use cached user if offline
     if (!navigator.onLine || !token) {
       const fallbackUser = localStorage.getItem("current_user");
 
@@ -57,6 +59,7 @@ export default function Offline() {
 
       const user = await res.json();
 
+      // Cache user locally
       localStorage.setItem("current_user", JSON.stringify(user));
       setUserId(Number(user.id));
 
@@ -76,12 +79,14 @@ export default function Offline() {
 
   /* ========================= */
 
+  // Load offline + online data when user is available
   useEffect(() => {
     if (userId !== null) {
       loadOfflineData(userId);
     }
   }, [userId]);
 
+  // Fetch cached data + available online content
   async function loadOfflineData(currentUserId) {
 
     const cachedQuizzes = await getCachedQuizzes(currentUserId);
@@ -90,10 +95,12 @@ export default function Offline() {
     setDownloadedQuizzes(cachedQuizzes);
     setDownloadedTopics(cachedTopics);
 
+    // Skip online fetch if offline
     if (!navigator.onLine || !token) return;
 
     try {
 
+     // Fetch quizzes
       const quizRes = await fetch("http://127.0.0.1:8000/api/quizzes/", {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -106,6 +113,7 @@ export default function Offline() {
         quizzes.filter(q => !cachedQuizIds.includes(q.id))
       );
 
+      // Fetch topics
       const topicRes = await fetch("http://127.0.0.1:8000/api/topics/", {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -124,11 +132,8 @@ export default function Offline() {
     }
   }
 
-  /* =========================
-     ACTIONS
-  ========================= */
 
-  // 🔥 FIXED HERE
+  // Download and cache full quiz
   async function handleQuizDownload(quiz) {
     if (!userId) return;
 
@@ -153,22 +158,26 @@ export default function Offline() {
     }
   }
 
+   // Cache topic locally
   async function handleTopicDownload(topic) {
     if (!userId) return;
     await cacheTopics([topic], userId);
     loadOfflineData(userId);
   }
 
+  // Remove cached quiz
   async function handleRemoveQuiz(id) {
     if (!userId) return;
     await deleteCachedQuiz(id, userId);
     loadOfflineData(userId);
   }
 
+  // Remove cached quiz
   function openQuiz(id) {
     navigate(`/quiz/${id}`);
   }
 
+  // Open quiz page
   function openTopic(topic) {
 
     const subject = topic.subject_name?.toLowerCase() || "english";
@@ -178,13 +187,11 @@ export default function Offline() {
     navigate(`/subjects/${subject}/${category}/${slug}`);
   }
 
-  /* ========================= */
-
+  // Filter items by search + subject
   const filterItems = (items) => {
     return items.filter(item => {
 
       const title = (item.topic || item.name || item.slug || "").toLowerCase();
-
       const matchesSearch = title.includes(search.toLowerCase());
 
       const matchesSubject =
@@ -195,14 +202,13 @@ export default function Offline() {
     });
   };
 
-  /* ========================= */
 
   return (
 
     <div className="offline-wrapper">
-
       <div className="offline-page">
 
+        {/* Page header */}
         <div className="page-header">
           <h1>Offline Mode</h1>
           <span className="chip">
@@ -210,6 +216,7 @@ export default function Offline() {
           </span>
         </div>
 
+        {/* Downloaded content */}
         <section>
           <h2>Downloaded Content</h2>
 
@@ -243,6 +250,7 @@ export default function Offline() {
           </div>
         </section>
 
+        {/* Available quizzes */}
         <section>
           <h2>Available Quizzes</h2>
 
@@ -262,6 +270,7 @@ export default function Offline() {
           </div>
         </section>
 
+        {/* Available topics */}
         <section>
           <h2>Available Topics</h2>
 
@@ -287,8 +296,7 @@ export default function Offline() {
 }
 
 
-/* ================================= */
-
+// Individual offline item (quiz/topic card)
 function OfflineItem({
   subject,
   subjectKey,
@@ -304,10 +312,12 @@ function OfflineItem({
 
     <div className={`offline-item ${subjectKey}`}>
 
+      {/* Icon shows download state */}
       <div className="icon">
         {downloaded ? "✓" : "↓"}
       </div>
 
+      {/* Item info */}
       <div className="item-info">
 
         <span className={`tag ${subjectKey}`}>
@@ -320,6 +330,7 @@ function OfflineItem({
 
       </div>
 
+      {/* Item info */}
       {downloaded ? (
 
         <div className="action-buttons">

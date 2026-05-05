@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import "../styles/studyInsights.css";
 
+// Component to display user's study analytics and AI-driven insights
 export default function StudyInsights() {
 
+  // Loading + data state
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+
+  // Auth token for API requests
   const token = localStorage.getItem("access");
 
+  // FETCH STUDY INSIGHTS
   useEffect(() => {
     const fetchInsights = async () => {
       try {
@@ -19,11 +24,13 @@ export default function StudyInsights() {
           }
         );
 
+        // If request fails, stop loading and show fallback UI
         if (!res.ok) {
           setLoading(false);
           return;
         }
 
+        // Store API response
         const result = await res.json();
         setData(result);
         setLoading(false);
@@ -38,24 +45,24 @@ export default function StudyInsights() {
   }, [token]);
 
 
+  // LOADING / EMPTY STATES
   if (loading) return <div className="study-page">Loading insights...</div>;
   if (!data) return <div className="study-page">No data available.</div>;
 
+  /* DATA PREPARATION */
 
-  /* ============================= */
-  /* DATA PREP */
-  /* ============================= */
-
+  // Sort topics by accuracy (highest to lowest)
   const accuracyData = (data.accuracy_by_topic || [])
     .sort((a, b) => b.value - a.value);
 
+  // Identify weakest topics (bottom 2)
   const weakest = accuracyData.slice(-2).reverse();
+
+  // Identify strongest topics (≥85%, max 2)
   const strongest = accuracyData.filter(t => t.value >= 85).slice(0, 2);
 
 
-  /* ============================= */
-  /* RENDER */
-  /* ============================= */
+  /* RENDER UI */
 
   return (
     <div className="study-page-wrapper">

@@ -1,26 +1,26 @@
 import { createContext, useEffect, useState } from "react";
 
+// Global settings context
 export const SettingsContext = createContext();
 
+// Provide theme, text size, and notification settings
 export function SettingsProvider({ children }) {
 
+  // Theme state (light/dark/system)
   const [theme, setTheme] = useState(
     localStorage.getItem("theme") || "system"
   );
 
+  // Text size state
   const [textSize, setTextSize] = useState(
     localStorage.getItem("textSize") || "default"
   );
 
-  // ✅ ADD THIS (notifications state)
+  // Notification toggle state
   const [notifications, setNotifications] = useState(
     localStorage.getItem("notifications") === "true"
   );
 
-
-  /* ============================
-     THEME
-  ============================ */
 
   useEffect(() => {
 
@@ -39,10 +39,6 @@ export function SettingsProvider({ children }) {
   }, [theme]);
 
 
-  /* ============================
-     TEXT SIZE
-  ============================ */
-
   useEffect(() => {
 
     localStorage.setItem("textSize", textSize);
@@ -55,15 +51,12 @@ export function SettingsProvider({ children }) {
   }, [textSize]);
 
 
-  /* ============================
-     NOTIFICATIONS (NEW)
-  ============================ */
-
+  // Persist notification setting
   useEffect(() => {
     localStorage.setItem("notifications", notifications);
   }, [notifications]);
 
-
+  // Provide settings to app
   return (
 
     <SettingsContext.Provider
@@ -76,7 +69,7 @@ export function SettingsProvider({ children }) {
         setTextSize,
 
         notifications,
-        setNotifications   // ✅ THIS FIXES YOUR ERROR
+        setNotifications
 
       }}
     >
