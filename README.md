@@ -73,7 +73,7 @@ EduBridge follows a client-server architecture:
 ### Backend
 
 * Python
-* Django / Flask (depending on your implementation)
+* Django 
 
 ### AI / Data
 
